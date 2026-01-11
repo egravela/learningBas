@@ -5,11 +5,16 @@ import {
   getCourse, 
   getCourseLessons, 
   getCourseQuizzes,
-  getMaterialiDidattici,
-  getLezioniConDocente,
-  getEserciziAccessibili
+  getLessonTopics,
+  type Lesson,
+  type Topic
 } from '@/lib/api';
 import { auth } from '@/lib/auth';
+
+// Tipo per lezione con i suoi topic
+export interface LessonWithTopics extends Lesson {
+  topics: Topic[];
+}
 
 interface CoursePageProps {
   params: Promise<{ id: string }>;
@@ -42,13 +47,10 @@ export default async function CoursePage({ params }: CoursePageProps) {
   const { id } = await params;
   const courseId = Number(id);
   
-  const [course, lessons, quizzes, materialiDidattici, lezioniConDocente, eserciziAccessibili, session] = await Promise.all([
+  const [course, lessons, quizzes, session] = await Promise.all([
     getCourse(courseId),
     getCourseLessons(courseId),
     getCourseQuizzes(courseId),
-    getMaterialiDidattici(),
-    getLezioniConDocente(),
-    getEserciziAccessibili(),
     auth(),
   ]);
 
@@ -56,14 +58,22 @@ export default async function CoursePage({ params }: CoursePageProps) {
     notFound();
   }
 
+  // Carica i topic per ogni lezione in parallelo
+  const lessonsWithTopics: LessonWithTopics[] = await Promise.all(
+    lessons.map(async (lesson) => {
+      const topics = await getLessonTopics(lesson.id, courseId);
+      return {
+        ...lesson,
+        topics,
+      };
+    })
+  );
+
   return (
     <CourseDetail 
       course={course} 
-      lessons={lessons} 
+      lessons={lessonsWithTopics} 
       quizzes={quizzes} 
-      materialiDidattici={materialiDidattici}
-      lezioniConDocente={lezioniConDocente}
-      eserciziAccessibili={eserciziAccessibili}
       isAuthenticated={!!session} 
     />
   );

@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
@@ -13,23 +14,22 @@ import {
   Award,
   FileText,
   ClipboardCheck,
-  FolderOpen,
-  Video,
-  Target,
-  ExternalLink,
-  Download
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
-import type { Course, Lesson, Quiz, MaterialeDidattico, LezioneConDocente, EsercizioAccessibile } from '@/lib/api';
+import type { Course, Lesson, Quiz, Topic } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
 import SafeHtml from '@/components/SafeHtml';
 
+// Tipo per lezione con i suoi topic
+interface LessonWithTopics extends Lesson {
+  topics: Topic[];
+}
+
 interface CourseDetailProps {
   course: Course;
-  lessons: Lesson[];
+  lessons: LessonWithTopics[];
   quizzes?: Quiz[];
-  materialiDidattici?: MaterialeDidattico[];
-  lezioniConDocente?: LezioneConDocente[];
-  eserciziAccessibili?: EsercizioAccessibile[];
   currentLessonId?: number;
   isAuthenticated?: boolean;
 }
@@ -38,12 +38,23 @@ export default function CourseDetail({
   course, 
   lessons, 
   quizzes = [], 
-  materialiDidattici = [],
-  lezioniConDocente = [],
-  eserciziAccessibili = [],
   currentLessonId, 
   isAuthenticated = false 
 }: CourseDetailProps) {
+  // Stato per tenere traccia delle lezioni espanse
+  const [expandedLessons, setExpandedLessons] = useState<Set<number>>(new Set());
+  
+  const toggleLesson = (lessonId: number) => {
+    setExpandedLessons(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(lessonId)) {
+        newSet.delete(lessonId);
+      } else {
+        newSet.add(lessonId);
+      }
+      return newSet;
+    });
+  };
   const title = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
   
   return (
@@ -186,8 +197,8 @@ export default function CourseDetail({
                 />
               </div>
 
-              {/* Lessons */}
-              {lessons.length > 0 && (
+              {/* Contenuto del Corso - Struttura Gerarchica */}
+              {(lessons.length > 0 || quizzes.length > 0) && (
                 <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
                   {/* Header */}
                   <div className="px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
@@ -196,321 +207,166 @@ export default function CourseDetail({
                         <BookOpen className="w-4 h-4 text-emerald-500" />
                         Contenuto del Corso
                       </h2>
-                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
-                        {lessons.length} lezioni
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                          {lessons.length} lezioni
+                        </span>
+                        {quizzes.length > 0 && (
+                          <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
+                            {quizzes.length} quiz
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  {/* Lessons List */}
+                  {/* Hierarchical Content */}
                   <div className="p-3">
+                    {/* Lezioni con Topic */}
                     {lessons.map((lesson, index) => {
                       const isActive = currentLessonId === lesson.id;
-                      const isFirst = index === 0;
-                      const isLast = index === lessons.length - 1;
+                      const hasTopics = lesson.topics && lesson.topics.length > 0;
+                      const isExpanded = expandedLessons.has(lesson.id);
+                      const isLast = index === lessons.length - 1 && quizzes.length === 0;
                       
                       return (
-                        <Link
+                        <motion.div
                           key={lesson.id}
-                          href={`/corsi/${course.id}/lezioni/${lesson.id}`}
-                          className="block"
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 + index * 0.03 }}
+                          className="relative"
                         >
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 + index * 0.03 }}
-                            className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
-                              isActive
-                                ? 'bg-emerald-50 shadow-sm'
-                                : 'hover:bg-slate-50'
-                            }`}
-                          >
-                            {/* Number Badge */}
-                            <div className="relative">
-                              <span className={`w-7 h-7 rounded-full text-xs font-semibold flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                          {/* Linea connettore verticale */}
+                          {!isLast && (
+                            <div className="absolute left-[13px] top-10 bottom-0 w-0.5 bg-slate-200" />
+                          )}
+                          
+                          {/* Lesson Row */}
+                          <div className="flex items-center gap-2">
+                            {/* Toggle + Number */}
+                            <button
+                              onClick={() => hasTopics && toggleLesson(lesson.id)}
+                              className={`relative z-10 w-7 h-7 rounded-full text-xs font-semibold flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                                 isActive
                                   ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                                  : 'bg-slate-100 text-slate-500 group-hover:bg-emerald-500 group-hover:text-white group-hover:shadow-md group-hover:shadow-emerald-500/20'
-                              }`}>
-                                {index + 1}
-                              </span>
-                              {/* Connector Line */}
-                              {!isLast && (
-                                <div className="absolute top-7 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-slate-200" />
+                                  : hasTopics
+                                  ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-500 hover:text-white cursor-pointer'
+                                  : 'bg-slate-100 text-slate-500'
+                              }`}
+                            >
+                              {hasTopics ? (
+                                isExpanded ? (
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                ) : (
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                )
+                              ) : (
+                                index + 1
                               )}
-                            </div>
+                            </button>
                             
-                            {/* Lesson Title */}
-                            <div className="flex-grow min-w-0">
-                              <span className={`text-sm block truncate transition-colors duration-200 ${
+                            {/* Lesson Link */}
+                            <Link
+                              href={`/corsi/${course.id}/lezioni/${lesson.id}`}
+                              className="flex-grow group"
+                            >
+                              <div className={`flex items-center gap-2 p-2 rounded-lg transition-all duration-200 ${
                                 isActive
-                                  ? 'text-emerald-700 font-medium'
-                                  : 'text-slate-600 group-hover:text-slate-900'
+                                  ? 'bg-emerald-50'
+                                  : 'hover:bg-slate-50'
                               }`}>
-                                {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
-                              </span>
-                            </div>
-                            
-                            {/* Play Icon */}
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                              isActive
-                                ? 'bg-emerald-500/20'
-                                : 'bg-transparent group-hover:bg-emerald-100'
-                            }`}>
-                              <PlayCircle className={`w-3.5 h-3.5 transition-all duration-200 ${
-                                isActive
-                                  ? 'text-emerald-600'
-                                  : 'text-slate-400 group-hover:text-emerald-500 group-hover:scale-110'
-                              }`} />
-                            </div>
-                          </motion.div>
-                        </Link>
+                                <div className="flex-grow min-w-0">
+                                  <span className={`text-sm block truncate transition-colors duration-200 ${
+                                    isActive
+                                      ? 'text-emerald-700 font-medium'
+                                      : 'text-slate-700 group-hover:text-slate-900'
+                                  }`}>
+                                    {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
+                                  </span>
+                                  {hasTopics && (
+                                    <span className="text-xs text-slate-400">
+                                      {lesson.topics.length} argomenti
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                <PlayCircle className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${
+                                  isActive
+                                    ? 'text-emerald-500'
+                                    : 'text-slate-400 group-hover:text-emerald-500'
+                                }`} />
+                              </div>
+                            </Link>
+                          </div>
+                          
+                          {/* Topics (Collapsible) */}
+                          <AnimatePresence>
+                            {hasTopics && isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="ml-3 pl-4 border-l-2 border-emerald-200 mt-1 mb-2"
+                              >
+                                {lesson.topics.map((topic, topicIndex) => (
+                                  <div
+                                    key={topic.id}
+                                    className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+                                  >
+                                    <div className="w-5 h-5 rounded bg-slate-100 text-slate-500 flex items-center justify-center flex-shrink-0 text-xs font-medium">
+                                      {topicIndex + 1}
+                                    </div>
+                                    <span className="text-sm text-slate-600">
+                                      {topic.title?.rendered ? stripHtml(topic.title.rendered) : `Argomento ${topicIndex + 1}`}
+                                    </span>
+                                  </div>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
                       );
                     })}
-                  </div>
-                </div>
-              )}
-
-              {/* Quizzes */}
-              {quizzes.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
-                  {/* Header */}
-                  <div className="px-6 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                        <ClipboardCheck className="w-4 h-4 text-amber-500" />
-                        Quiz di Valutazione
-                      </h2>
-                      <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-                        {quizzes.length} {quizzes.length === 1 ? 'quiz' : 'quiz'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Quiz List */}
-                  <div className="p-3">
-                    {quizzes.map((quiz, index) => (
-                      <Link
-                        key={quiz.id}
-                        href={isAuthenticated ? `/corsi/${course.id}/quiz/${quiz.id}` : '/login'}
-                        className="block"
-                      >
-                        <motion.div
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 + index * 0.05 }}
-                          className="group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-amber-50"
-                        >
-                          {/* Quiz Icon */}
-                          <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-all duration-200">
-                            <ClipboardCheck className="w-3.5 h-3.5" />
-                          </div>
-                          
-                          {/* Quiz Title */}
-                          <div className="flex-grow min-w-0">
-                            <span className="text-sm text-slate-600 group-hover:text-slate-900 block truncate transition-colors duration-200">
-                              {quiz.title?.rendered ? stripHtml(quiz.title.rendered) : `Quiz ${index + 1}`}
-                            </span>
-                          </div>
-                          
-                          {/* Arrow */}
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-transparent group-hover:bg-amber-100 transition-all duration-200">
-                            <PlayCircle className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 transition-all duration-200" />
-                          </div>
-                        </motion.div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Materiali Didattici */}
-              {materialiDidattici.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
-                  {/* Header */}
-                  <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                        <FolderOpen className="w-4 h-4 text-blue-500" />
-                        Materiali Didattici
-                      </h2>
-                      <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                        {materialiDidattici.length} {materialiDidattici.length === 1 ? 'file' : 'file'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Materials List */}
-                  <div className="p-3">
-                    {materialiDidattici.map((materiale, index) => (
-                      <a
-                        key={materiale.id}
-                        href={materiale.meta?.link_al_pdf || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block"
-                      >
-                        <motion.div
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 + index * 0.05 }}
-                          className="group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-blue-50"
-                        >
-                          <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-all duration-200">
-                            <Download className="w-3.5 h-3.5" />
-                          </div>
-                          
-                          <div className="flex-grow min-w-0">
-                            <span className="text-sm text-slate-600 group-hover:text-slate-900 block truncate transition-colors duration-200">
-                              {materiale.title?.rendered ? stripHtml(materiale.title.rendered) : `Materiale ${index + 1}`}
-                            </span>
-                            {materiale.meta?.tipologia && (
-                              <span className="text-xs text-slate-400">{materiale.meta.tipologia}</span>
-                            )}
-                          </div>
-                          
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-transparent group-hover:bg-blue-100 transition-all duration-200">
-                            <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-all duration-200" />
-                          </div>
-                        </motion.div>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Lezioni con Docente */}
-              {lezioniConDocente.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
-                  {/* Header */}
-                  <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                        <Video className="w-4 h-4 text-purple-500" />
-                        Lezioni con Docente
-                      </h2>
-                      <span className="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                        {lezioniConDocente.length} {lezioniConDocente.length === 1 ? 'lezione' : 'lezioni'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Lessons List */}
-                  <div className="p-3">
-                    {lezioniConDocente.map((lezione, index) => (
-                      <div key={lezione.id} className="mb-3 last:mb-0">
-                        <motion.div
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 + index * 0.05 }}
-                          className="p-4 rounded-xl bg-slate-50 hover:bg-purple-50 transition-all duration-200"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0">
-                              <Video className="w-4 h-4" />
-                            </div>
-                            
-                            <div className="flex-grow min-w-0">
-                              <h3 className="text-sm font-medium text-slate-800 mb-1">
-                                {lezione.title?.rendered ? stripHtml(lezione.title.rendered) : `Lezione ${index + 1}`}
-                              </h3>
-                              {lezione.meta?.sottotitolo && (
-                                <p className="text-xs text-slate-500 mb-2">{lezione.meta.sottotitolo}</p>
-                              )}
-                              
-                              {/* Links */}
-                              <div className="flex flex-wrap gap-2">
-                                {lezione.meta?.link_alla_video_conferenza && (
-                                  <a
-                                    href={lezione.meta.link_alla_video_conferenza}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-md hover:bg-purple-200 transition-colors"
-                                  >
-                                    <Video className="w-3 h-3" />
-                                    Video
-                                  </a>
-                                )}
-                                {lezione.meta?.link_alle_slide && (
-                                  <a
-                                    href={lezione.meta.link_alle_slide}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md hover:bg-blue-200 transition-colors"
-                                  >
-                                    <FileText className="w-3 h-3" />
-                                    Slide
-                                  </a>
-                                )}
-                                {lezione.meta?.link_alle_slide_2 && (
-                                  <a
-                                    href={lezione.meta.link_alle_slide_2}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md hover:bg-blue-200 transition-colors"
-                                  >
-                                    <FileText className="w-3 h-3" />
-                                    Slide 2
-                                  </a>
-                                )}
-                                {lezione.meta?.link_alle_slide_3 && (
-                                  <a
-                                    href={lezione.meta.link_alle_slide_3}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md hover:bg-blue-200 transition-colors"
-                                  >
-                                    <FileText className="w-3 h-3" />
-                                    Slide 3
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Esercizi Accessibili */}
-              {eserciziAccessibili.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
-                  {/* Header */}
-                  <div className="px-6 py-4 bg-gradient-to-r from-teal-50 to-cyan-50 border-b border-teal-100">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                        <Target className="w-4 h-4 text-teal-500" />
-                        Esercizi Accessibili
-                      </h2>
-                      <span className="px-2.5 py-1 bg-teal-100 text-teal-700 text-xs font-medium rounded-full">
-                        {eserciziAccessibili.length} {eserciziAccessibili.length === 1 ? 'esercizio' : 'esercizi'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Exercises List */}
-                  <div className="p-3">
-                    {eserciziAccessibili.map((esercizio, index) => (
-                      <motion.div
-                        key={esercizio.id}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + index * 0.05 }}
-                        className="group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-teal-50"
-                      >
-                        <div className="w-7 h-7 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-500 group-hover:text-white transition-all duration-200">
-                          <Target className="w-3.5 h-3.5" />
-                        </div>
-                        
-                        <div className="flex-grow min-w-0">
-                          <span className="text-sm text-slate-600 group-hover:text-slate-900 block truncate transition-colors duration-200">
-                            {esercizio.title?.rendered ? stripHtml(esercizio.title.rendered) : `Esercizio ${index + 1}`}
+                    
+                    {/* Quiz alla fine della gerarchia */}
+                    {quizzes.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-slate-100">
+                        <div className="px-2 py-1 mb-2">
+                          <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider flex items-center gap-1">
+                            <ClipboardCheck className="w-3 h-3" />
+                            Quiz di Valutazione
                           </span>
                         </div>
-                      </motion.div>
-                    ))}
+                        {quizzes.map((quiz, index) => (
+                          <Link
+                            key={quiz.id}
+                            href={isAuthenticated ? `/corsi/${course.id}/quiz/${quiz.id}` : '/login'}
+                            className="block"
+                          >
+                            <motion.div
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.3 + (lessons.length + index) * 0.03 }}
+                              className="group flex items-center gap-2 p-2 rounded-lg transition-all duration-200 hover:bg-amber-50"
+                            >
+                              <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-all duration-200">
+                                <ClipboardCheck className="w-3.5 h-3.5" />
+                              </div>
+                              
+                              <div className="flex-grow min-w-0">
+                                <span className="text-sm text-slate-700 group-hover:text-slate-900 block truncate transition-colors duration-200">
+                                  {quiz.title?.rendered ? stripHtml(quiz.title.rendered) : `Quiz ${index + 1}`}
+                                </span>
+                              </div>
+                              
+                              <PlayCircle className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-all duration-200" />
+                            </motion.div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
