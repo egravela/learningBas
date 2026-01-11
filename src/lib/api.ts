@@ -524,16 +524,16 @@ export interface QuizResult {
 }
 
 // Verifica le risposte del quiz e ottiene i risultati
+// Questa funzione chiama l'API route locale che fa da proxy verso WordPress
 export async function checkQuizAnswers(quizId: number, userAnswers: Record<number, string>): Promise<QuizResult | null> {
   try {
-    const response = await fetch(
-      `${WORDPRESS_URL}/wp-json/learndash-quiz-api/v1/quiz/${quizId}/check-answers`,
-      {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(userAnswers),
-      }
-    );
+    const response = await fetch('/api/quiz/check-answers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ quizId, answers: userAnswers }),
+    });
     
     if (!response.ok) {
       console.error('Error checking quiz answers:', response.status);
