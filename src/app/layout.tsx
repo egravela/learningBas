@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" className={outfit.variable}>
-      <body className="min-h-screen flex flex-col font-sans">
+      <body className="min-h-screen flex flex-col font-sans" suppressHydrationWarning>
         <AuthProvider>
           <Header />
           <main className="flex-grow">
