@@ -11,9 +11,12 @@ import {
 } from '@/lib/api';
 import { auth } from '@/lib/auth';
 
-// Tipo per lezione con i suoi topic
-export interface LessonWithTopics extends Lesson {
+import type { Quiz } from '@/lib/api';
+
+// Tipo per lezione con i suoi topic e quiz
+export interface LessonWithContent extends Lesson {
   topics: Topic[];
+  quizzes: Quiz[];
 }
 
 interface CoursePageProps {
@@ -58,22 +61,28 @@ export default async function CoursePage({ params }: CoursePageProps) {
     notFound();
   }
 
-  // Carica i topic per ogni lezione in parallelo
-  const lessonsWithTopics: LessonWithTopics[] = await Promise.all(
+  // Carica i topic per ogni lezione e associa i quiz
+  const lessonsWithContent: LessonWithContent[] = await Promise.all(
     lessons.map(async (lesson) => {
       const topics = await getLessonTopics(lesson.id, courseId);
+      // Filtra i quiz che appartengono a questa lezione
+      const lessonQuizzes = quizzes.filter(quiz => quiz.lesson === lesson.id);
       return {
         ...lesson,
         topics,
+        quizzes: lessonQuizzes,
       };
     })
   );
 
+  // Quiz non associati a nessuna lezione (quiz del corso)
+  const courseQuizzes = quizzes.filter(quiz => !quiz.lesson || quiz.lesson === 0);
+
   return (
     <CourseDetail 
       course={course} 
-      lessons={lessonsWithTopics} 
-      quizzes={quizzes} 
+      lessons={lessonsWithContent} 
+      courseQuizzes={courseQuizzes}
       isAuthenticated={!!session} 
     />
   );

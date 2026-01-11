@@ -21,15 +21,16 @@ import type { Course, Lesson, Quiz, Topic } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
 import SafeHtml from '@/components/SafeHtml';
 
-// Tipo per lezione con i suoi topic
-interface LessonWithTopics extends Lesson {
+// Tipo per lezione con i suoi topic e quiz
+interface LessonWithContent extends Lesson {
   topics: Topic[];
+  quizzes: Quiz[];
 }
 
 interface CourseDetailProps {
   course: Course;
-  lessons: LessonWithTopics[];
-  quizzes?: Quiz[];
+  lessons: LessonWithContent[];
+  courseQuizzes?: Quiz[]; // Quiz non associati a lezioni specifiche
   currentLessonId?: number;
   isAuthenticated?: boolean;
 }
@@ -37,7 +38,7 @@ interface CourseDetailProps {
 export default function CourseDetail({ 
   course, 
   lessons, 
-  quizzes = [], 
+  courseQuizzes = [], 
   currentLessonId, 
   isAuthenticated = false 
 }: CourseDetailProps) {
@@ -198,7 +199,7 @@ export default function CourseDetail({
               </div>
 
               {/* Contenuto del Corso - Struttura Gerarchica */}
-              {(lessons.length > 0 || quizzes.length > 0) && (
+              {lessons.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
                   {/* Header */}
                   <div className="px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
@@ -207,27 +208,26 @@ export default function CourseDetail({
                         <BookOpen className="w-4 h-4 text-emerald-500" />
                         Contenuto del Corso
                       </h2>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
-                          {lessons.length} lezioni
-                        </span>
-                        {quizzes.length > 0 && (
-                          <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-                            {quizzes.length} quiz
-                          </span>
-                        )}
-                      </div>
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                        {lessons.length} lezioni
+                      </span>
                     </div>
                   </div>
                   
                   {/* Hierarchical Content */}
                   <div className="p-3">
-                    {/* Lezioni con Topic */}
+                    {/* Lezioni con Topic e Quiz */}
                     {lessons.map((lesson, index) => {
                       const isActive = currentLessonId === lesson.id;
                       const hasTopics = lesson.topics && lesson.topics.length > 0;
+                      const hasQuizzes = lesson.quizzes && lesson.quizzes.length > 0;
+                      const hasContent = hasTopics || hasQuizzes;
                       const isExpanded = expandedLessons.has(lesson.id);
-                      const isLast = index === lessons.length - 1 && quizzes.length === 0;
+                      const isLast = index === lessons.length - 1;
+                      
+                      // Conta elementi sotto la lezione
+                      const topicsCount = lesson.topics?.length || 0;
+                      const quizzesCount = lesson.quizzes?.length || 0;
                       
                       return (
                         <motion.div
@@ -235,27 +235,22 @@ export default function CourseDetail({
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.2 + index * 0.03 }}
-                          className="relative"
+                          className={`${!isLast ? 'mb-1' : ''}`}
                         >
-                          {/* Linea connettore verticale */}
-                          {!isLast && (
-                            <div className="absolute left-[13px] top-10 bottom-0 w-0.5 bg-slate-200" />
-                          )}
-                          
                           {/* Lesson Row */}
                           <div className="flex items-center gap-2">
                             {/* Toggle + Number */}
                             <button
-                              onClick={() => hasTopics && toggleLesson(lesson.id)}
+                              onClick={() => hasContent && toggleLesson(lesson.id)}
                               className={`relative z-10 w-7 h-7 rounded-full text-xs font-semibold flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                                 isActive
                                   ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                                  : hasTopics
+                                  : hasContent
                                   ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-500 hover:text-white cursor-pointer'
                                   : 'bg-slate-100 text-slate-500'
                               }`}
                             >
-                              {hasTopics ? (
+                              {hasContent ? (
                                 isExpanded ? (
                                   <ChevronDown className="w-3.5 h-3.5" />
                                 ) : (
@@ -284,9 +279,11 @@ export default function CourseDetail({
                                   }`}>
                                     {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
                                   </span>
-                                  {hasTopics && (
+                                  {hasContent && (
                                     <span className="text-xs text-slate-400">
-                                      {lesson.topics.length} argomenti
+                                      {topicsCount > 0 && `${topicsCount} argomenti`}
+                                      {topicsCount > 0 && quizzesCount > 0 && ' · '}
+                                      {quizzesCount > 0 && `${quizzesCount} quiz`}
                                     </span>
                                   )}
                                 </div>
@@ -300,9 +297,9 @@ export default function CourseDetail({
                             </Link>
                           </div>
                           
-                          {/* Topics (Collapsible) */}
+                          {/* Content sotto la lezione (Topics + Quiz) */}
                           <AnimatePresence>
-                            {hasTopics && isExpanded && (
+                            {hasContent && isExpanded && (
                               <motion.div
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
@@ -310,18 +307,37 @@ export default function CourseDetail({
                                 transition={{ duration: 0.2 }}
                                 className="ml-3 pl-4 border-l-2 border-emerald-200 mt-1 mb-2"
                               >
-                                {lesson.topics.map((topic, topicIndex) => (
+                                {/* Topics */}
+                                {hasTopics && lesson.topics.map((topic, topicIndex) => (
                                   <div
                                     key={topic.id}
                                     className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
                                   >
                                     <div className="w-5 h-5 rounded bg-slate-100 text-slate-500 flex items-center justify-center flex-shrink-0 text-xs font-medium">
-                                      {topicIndex + 1}
+                                      <FileText className="w-3 h-3" />
                                     </div>
                                     <span className="text-sm text-slate-600">
                                       {topic.title?.rendered ? stripHtml(topic.title.rendered) : `Argomento ${topicIndex + 1}`}
                                     </span>
                                   </div>
+                                ))}
+                                
+                                {/* Quiz della lezione */}
+                                {hasQuizzes && lesson.quizzes.map((quiz) => (
+                                  <Link
+                                    key={quiz.id}
+                                    href={isAuthenticated ? `/corsi/${course.id}/quiz/${quiz.id}` : '/login'}
+                                    className="block"
+                                  >
+                                    <div className="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-amber-50 transition-colors group">
+                                      <div className="w-5 h-5 rounded bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                        <ClipboardCheck className="w-3 h-3" />
+                                      </div>
+                                      <span className="text-sm text-slate-600 group-hover:text-amber-700 transition-colors">
+                                        {quiz.title?.rendered ? stripHtml(quiz.title.rendered) : 'Quiz'}
+                                      </span>
+                                    </div>
+                                  </Link>
                                 ))}
                               </motion.div>
                             )}
@@ -330,16 +346,16 @@ export default function CourseDetail({
                       );
                     })}
                     
-                    {/* Quiz alla fine della gerarchia */}
-                    {quizzes.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-slate-100">
+                    {/* Quiz del corso (non associati a lezioni) */}
+                    {courseQuizzes.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-slate-100">
                         <div className="px-2 py-1 mb-2">
                           <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider flex items-center gap-1">
                             <ClipboardCheck className="w-3 h-3" />
-                            Quiz di Valutazione
+                            Quiz Finale del Corso
                           </span>
                         </div>
-                        {quizzes.map((quiz, index) => (
+                        {courseQuizzes.map((quiz, index) => (
                           <Link
                             key={quiz.id}
                             href={isAuthenticated ? `/corsi/${course.id}/quiz/${quiz.id}` : '/login'}
