@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, BookOpen, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import type { Lesson, Course } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
@@ -19,11 +19,16 @@ interface LessonViewProps {
     };
     wpToken?: string;
   } | null;
+  prevLesson: Lesson | null;
+  nextLesson: Lesson | null;
+  courseId: number;
 }
 
-export default function LessonView({ lesson, course }: LessonViewProps) {
+export default function LessonView({ lesson, course, prevLesson, nextLesson, courseId }: LessonViewProps) {
   const lessonTitle = lesson.title?.rendered ? stripHtml(lesson.title.rendered) : 'Lezione';
   const courseTitle = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
+  const prevLessonTitle = prevLesson?.title?.rendered ? stripHtml(prevLesson.title.rendered) : 'Lezione Precedente';
+  const nextLessonTitle = nextLesson?.title?.rendered ? stripHtml(nextLesson.title.rendered) : 'Lezione Successiva';
 
   return (
     <>
@@ -120,7 +125,7 @@ export default function LessonView({ lesson, course }: LessonViewProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50"
+            className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50 mb-8"
           >
             <h2 className="text-2xl font-bold text-slate-900 mb-6">
               Contenuto della Lezione
@@ -130,6 +135,81 @@ export default function LessonView({ lesson, course }: LessonViewProps) {
               className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-img:shadow-lg"
             />
           </motion.div>
+
+          {/* Navigation Links */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Previous Lesson */}
+            {prevLesson ? (
+              <Link href={`/corsi/${courseId}/lezioni/${prevLesson.id}`}>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="group bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-emerald-500/10 border-2 border-slate-100 hover:border-emerald-300 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-colors">
+                      <ChevronLeft className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-500 mb-1">Lezione Precedente</p>
+                      <h3 className="font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors truncate">
+                        {prevLessonTitle}
+                      </h3>
+                    </div>
+                  </div>
+                </motion.div>
+              </Link>
+            ) : (
+              <div className="bg-slate-50 rounded-2xl p-6 border-2 border-slate-100 opacity-50">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center">
+                    <ChevronLeft className="w-6 h-6 text-slate-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-slate-400 mb-1">Lezione Precedente</p>
+                    <h3 className="font-semibold text-slate-400">Nessuna lezione precedente</h3>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Next Lesson */}
+            {nextLesson ? (
+              <Link href={`/corsi/${courseId}/lezioni/${nextLesson.id}`}>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="group bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-emerald-500/10 border-2 border-slate-100 hover:border-emerald-300 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 min-w-0 text-right">
+                      <p className="text-sm text-slate-500 mb-1">Lezione Successiva</p>
+                      <h3 className="font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors truncate">
+                        {nextLessonTitle}
+                      </h3>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-colors">
+                      <ChevronRight className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
+                    </div>
+                  </div>
+                </motion.div>
+              </Link>
+            ) : (
+              <div className="bg-slate-50 rounded-2xl p-6 border-2 border-slate-100 opacity-50">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 text-right">
+                    <p className="text-sm text-slate-400 mb-1">Lezione Successiva</p>
+                    <h3 className="font-semibold text-slate-400">Nessuna lezione successiva</h3>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center">
+                    <ChevronRight className="w-6 h-6 text-slate-400" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </>

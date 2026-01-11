@@ -170,7 +170,7 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
                   <h2 className="text-2xl font-bold text-slate-900 mb-6">
                     Contenuto del Corso
                   </h2>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {lessons.map((lesson, index) => (
                       <Link
                         key={lesson.id}
@@ -180,17 +180,17 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.4 + index * 0.05 }}
-                          className="group flex items-center gap-4 p-4 rounded-xl bg-slate-50 hover:bg-emerald-50 transition-colors cursor-pointer"
+                          className="group flex items-center gap-4 p-5 rounded-xl border-2 border-slate-100 hover:border-emerald-300 bg-white hover:bg-emerald-50/50 transition-all duration-300 cursor-pointer hover:shadow-md"
                         >
-                          <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700 flex items-center justify-center font-bold text-base group-hover:from-emerald-500 group-hover:to-teal-500 group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-lg">
                             {index + 1}
                           </div>
-                          <div className="flex-grow">
-                            <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors">
+                          <div className="flex-grow min-w-0">
+                            <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors text-base">
                               {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
                             </h3>
                           </div>
-                          <PlayCircle className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                          <PlayCircle className="w-6 h-6 text-slate-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
                         </motion.div>
                       </Link>
                     ))}
