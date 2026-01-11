@@ -49,7 +49,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
     redirect('/corsi');
   }
 
-  // Costruisci l'URL WordPress della lezione
+  // Costruisci l'URL WordPress della lezione (non usato ma mantenuto per compatibilità)
   const wpLessonUrl = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || 'https://accessibilita.regione.basilicata.it'}/sfwd-lessons/${lesson.slug || `lesson-${lessonId}`}`;
 
   return <LessonView lesson={lesson} course={course} wpLessonUrl={wpLessonUrl} session={session} />;
