@@ -28,6 +28,17 @@
   ::selection {
     @apply bg-emerald-500 text-white;
   }
+  
+  /* Rimuovi sottolineature dai link */
+  a {
+    @apply no-underline;
+  }
+  
+  /* Link blu solo per link esterni o specifici */
+  a[href^="http"]:not([class*="no-underline"]),
+  .prose a {
+    @apply underline;
+  }
 }
 
 @layer components {

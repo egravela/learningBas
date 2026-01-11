@@ -88,17 +88,17 @@ export default function Header() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Link
-                  href={item.href}
-                  className={`group flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-300 ${
-                    isScrolled
-                      ? 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50'
-                      : 'text-white/90 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <item.icon className="w-4 h-4 transition-transform group-hover:scale-110" />
-                  {item.label}
-                </Link>
+                  <Link
+                    href={item.href}
+                    className={`group flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-300 no-underline ${
+                      isScrolled
+                        ? 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50'
+                        : 'text-white hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    {item.label}
+                  </Link>
               </motion.div>
             ))}
 
@@ -117,10 +117,10 @@ export default function Header() {
                   {/* User Info */}
                   <Link
                     href="/dashboard"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 no-underline ${
                       isScrolled
                         ? 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50'
-                        : 'text-white/90 hover:text-white hover:bg-white/10'
+                        : 'text-white hover:text-white hover:bg-white/10'
                     }`}
                   >
                     {session.user?.image ? (
@@ -146,10 +146,10 @@ export default function Header() {
                   {/* Logout Button */}
                   <button
                     onClick={handleSignOut}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-300 ${
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-300 no-underline ${
                       isScrolled
                         ? 'text-slate-500 hover:text-red-600 hover:bg-red-50'
-                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-white hover:text-white hover:bg-white/10'
                     }`}
                   >
                     <LogOut className="w-4 h-4" />
