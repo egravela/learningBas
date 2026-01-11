@@ -11,20 +11,22 @@ import {
   PlayCircle,
   ArrowLeft,
   Award,
-  FileText
+  FileText,
+  ClipboardCheck
 } from 'lucide-react';
-import type { Course, Lesson } from '@/lib/api';
+import type { Course, Lesson, Quiz } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
 import SafeHtml from '@/components/SafeHtml';
 
 interface CourseDetailProps {
   course: Course;
   lessons: Lesson[];
+  quizzes?: Quiz[];
   currentLessonId?: number;
   isAuthenticated?: boolean;
 }
 
-export default function CourseDetail({ course, lessons, currentLessonId, isAuthenticated = false }: CourseDetailProps) {
+export default function CourseDetail({ course, lessons, quizzes = [], currentLessonId, isAuthenticated = false }: CourseDetailProps) {
   const title = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
   
   return (
@@ -248,6 +250,59 @@ export default function CourseDetail({ course, lessons, currentLessonId, isAuthe
                         </Link>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {/* Quizzes */}
+              {quizzes.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
+                  {/* Header */}
+                  <div className="px-6 py-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                        <ClipboardCheck className="w-4 h-4 text-amber-500" />
+                        Quiz di Valutazione
+                      </h2>
+                      <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
+                        {quizzes.length} {quizzes.length === 1 ? 'quiz' : 'quiz'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Quiz List */}
+                  <div className="p-3">
+                    {quizzes.map((quiz, index) => (
+                      <Link
+                        key={quiz.id}
+                        href={isAuthenticated ? `/corsi/${course.id}/quiz/${quiz.id}` : '/login'}
+                        className="block"
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 + index * 0.05 }}
+                          className="group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 hover:bg-amber-50"
+                        >
+                          {/* Quiz Icon */}
+                          <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-all duration-200">
+                            <ClipboardCheck className="w-3.5 h-3.5" />
+                          </div>
+                          
+                          {/* Quiz Title */}
+                          <div className="flex-grow min-w-0">
+                            <span className="text-sm text-slate-600 group-hover:text-slate-900 block truncate transition-colors duration-200">
+                              {quiz.title?.rendered ? stripHtml(quiz.title.rendered) : `Quiz ${index + 1}`}
+                            </span>
+                          </div>
+                          
+                          {/* Arrow */}
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-transparent group-hover:bg-amber-100 transition-all duration-200">
+                            <PlayCircle className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 transition-all duration-200" />
+                          </div>
+                        </motion.div>
+                      </Link>
+                    ))}
                   </div>
                 </div>
               )}
