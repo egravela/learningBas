@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, BookOpen, Home, LogIn, LogOut, User } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
@@ -14,9 +15,13 @@ const navItems = [
 ];
 
 export default function Header() {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: session, status } = useSession();
+
+  // Nascondi header nella pagina di login
+  const isLoginPage = pathname === '/login';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +30,11 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Non renderizzare l'header nella pagina di login
+  if (isLoginPage) {
+    return null;
+  }
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' });
@@ -40,22 +50,33 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
+          {/* Logo o Titolo */}
           <Link href="/" className="relative z-10">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-3"
-              animate={{
-                scale: isScrolled ? 0.85 : 1,
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              <Logo 
-                variant={isScrolled ? 'default' : 'light'} 
-                className={isScrolled ? 'h-12' : 'h-14'}
-              />
-            </motion.div>
+            {isScrolled ? (
+              // Quando sticky, mostra solo il titolo
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="flex items-center"
+              >
+                <h1 className="text-xl font-bold text-slate-900">
+                  Formazione Accessibilità
+                </h1>
+              </motion.div>
+            ) : (
+              // Quando non sticky, mostra il logo
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-3"
+              >
+                <Logo 
+                  variant="light" 
+                  className="h-14"
+                />
+              </motion.div>
+            )}
           </Link>
 
           {/* Desktop Navigation */}
