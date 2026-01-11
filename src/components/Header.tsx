@@ -61,7 +61,7 @@ export default function Header() {
                 className="flex items-center"
               >
                 <h1 className="text-xl font-bold text-slate-900">
-                  Formazione Accessibilità
+                  LearningBas
                 </h1>
               </motion.div>
             ) : (
