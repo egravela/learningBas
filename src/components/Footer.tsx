@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { BookOpen, Mail, Phone, MapPin, ExternalLink } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -22,13 +22,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="inline-block mb-6">
-              <Image
-                src="https://accessibilita.regione.basilicata.it/wp-content/uploads/2024/08/RB_logo_350x163.gif"
-                alt="Regione Basilicata"
-                width={175}
-                height={82}
-                className="h-16 w-auto brightness-0 invert opacity-90"
-              />
+              <Logo variant="light" className="h-16 opacity-90" />
             </Link>
             <p className="text-slate-400 leading-relaxed max-w-md mb-6">
               Piattaforma di e-learning della Regione Basilicata per la formazione 

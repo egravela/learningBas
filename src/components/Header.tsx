@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, BookOpen, Home, LogIn, LogOut, User } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
+import Logo from './Logo';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -46,13 +46,9 @@ export default function Header() {
               whileTap={{ scale: 0.98 }}
               className="flex items-center gap-3"
             >
-              <Image
-                src="https://accessibilita.regione.basilicata.it/wp-content/uploads/2024/08/RB_logo_350x163.gif"
-                alt="Regione Basilicata"
-                width={175}
-                height={82}
-                className="h-14 w-auto"
-                priority
+              <Logo 
+                variant={isScrolled ? 'default' : 'light'} 
+                className="h-14"
               />
             </motion.div>
           </Link>

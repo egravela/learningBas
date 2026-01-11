@@ -7,4 +7,5 @@ export { default as CoursesSection } from './CoursesSection';
 export { default as CourseCard } from './CourseCard';
 export { default as PageTransition } from './PageTransition';
 export { default as SafeHtml } from './SafeHtml';
+export { default as Logo } from './Logo';
 
