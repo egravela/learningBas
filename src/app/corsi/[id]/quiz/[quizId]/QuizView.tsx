@@ -525,24 +525,35 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
                   })}
                 </div>
               ) : (
-                <div className="mb-8 p-4 bg-amber-50 rounded-xl">
-                  <p className="text-amber-800 text-sm mb-2 font-medium">
-                    Rispondi alla domanda sopra
-                  </p>
-                  <p className="text-amber-700 text-xs">
-                    Il contenuto della domanda include le opzioni di risposta. 
-                    Leggi attentamente e seleziona &quot;Risposta data&quot; quando hai finito.
-                  </p>
-                  <button
-                    onClick={() => handleSelectAnswer('answered')}
-                    className={`mt-4 px-4 py-2 rounded-lg font-medium transition-all ${
-                      selectedAnswers[currentQuestionIndex] === 'answered'
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                    }`}
-                  >
-                    {selectedAnswers[currentQuestionIndex] === 'answered' ? '✓ Risposta data' : 'Segna come risposto'}
-                  </button>
+                <div className="mb-8">
+                  {/* Debug: mostra la struttura della domanda */}
+                  <details className="mb-4 p-4 bg-slate-100 rounded-xl">
+                    <summary className="text-sm font-medium text-slate-600 cursor-pointer">
+                      Debug: Struttura domanda (clicca per espandere)
+                    </summary>
+                    <pre className="mt-2 text-xs text-slate-500 overflow-auto max-h-60">
+                      {JSON.stringify(currentQuestion, null, 2)}
+                    </pre>
+                  </details>
+                  
+                  <div className="p-4 bg-amber-50 rounded-xl">
+                    <p className="text-amber-800 text-sm mb-2 font-medium">
+                      Opzioni di risposta non rilevate automaticamente
+                    </p>
+                    <p className="text-amber-700 text-xs mb-4">
+                      Leggi la domanda sopra e segna quando hai risposto.
+                    </p>
+                    <button
+                      onClick={() => handleSelectAnswer('answered')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                        selectedAnswers[currentQuestionIndex] === 'answered'
+                          ? 'bg-amber-500 text-white'
+                          : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                      }`}
+                    >
+                      {selectedAnswers[currentQuestionIndex] === 'answered' ? '✓ Risposta data' : 'Segna come risposto'}
+                    </button>
+                  </div>
                 </div>
               )}
 
