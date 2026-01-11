@@ -7,6 +7,8 @@ interface CoursePageProps {
   params: Promise<{ id: string }>;
 }
 
+import { stripHtml } from '@/lib/utils';
+
 export async function generateMetadata({ params }: CoursePageProps): Promise<Metadata> {
   const { id } = await params;
   const course = await getCourse(Number(id));
@@ -17,11 +19,12 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
     };
   }
 
-  const title = course.title?.rendered?.replace(/<[^>]*>/g, '') || 'Corso';
+  const title = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
+  const description = course.excerpt?.rendered ? stripHtml(course.excerpt.rendered).slice(0, 160) : 'Corso sulla formazione in accessibilità digitale';
   
   return {
     title: `${title} | Formazione Accessibilità - Regione Basilicata`,
-    description: course.excerpt?.rendered?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Corso sulla formazione in accessibilità digitale',
+    description,
   };
 }
 

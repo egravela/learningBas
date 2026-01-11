@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { BookOpen, Clock, ArrowRight, Users } from 'lucide-react';
 import type { Course } from '@/lib/api';
+import { stripHtml } from '@/lib/utils';
 
 interface CourseCardProps {
   course: Course;
@@ -12,9 +13,9 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ course, index }: CourseCardProps) {
-  // Rimuovi tag HTML dal titolo e dall'estratto
-  const title = course.title?.rendered?.replace(/<[^>]*>/g, '') || 'Corso';
-  const excerpt = course.excerpt?.rendered?.replace(/<[^>]*>/g, '').slice(0, 150) || '';
+  // Rimuovi tag HTML e decodifica caratteri speciali dal titolo e dall'estratto
+  const title = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
+  const excerpt = course.excerpt?.rendered ? stripHtml(course.excerpt.rendered).slice(0, 150) : '';
 
   return (
     <motion.div

@@ -14,6 +14,8 @@ import {
   FileText
 } from 'lucide-react';
 import type { Course, Lesson } from '@/lib/api';
+import { stripHtml } from '@/lib/utils';
+import SafeHtml from '@/components/SafeHtml';
 
 interface CourseDetailProps {
   course: Course;
@@ -21,7 +23,7 @@ interface CourseDetailProps {
 }
 
 export default function CourseDetail({ course, lessons }: CourseDetailProps) {
-  const title = course.title?.rendered?.replace(/<[^>]*>/g, '') || 'Corso';
+  const title = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
   
   return (
     <>
@@ -156,9 +158,9 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
                 <h2 className="text-2xl font-bold text-slate-900 mb-6">
                   Descrizione del Corso
                 </h2>
-                <div 
+                <SafeHtml
+                  html={course.content.rendered}
                   className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline"
-                  dangerouslySetInnerHTML={{ __html: course.content.rendered }}
                 />
               </div>
 
@@ -182,7 +184,7 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
                         </div>
                         <div className="flex-grow">
                           <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors">
-                            {lesson.title?.rendered?.replace(/<[^>]*>/g, '') || `Lezione ${index + 1}`}
+                            {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
                           </h3>
                         </div>
                         <PlayCircle className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
