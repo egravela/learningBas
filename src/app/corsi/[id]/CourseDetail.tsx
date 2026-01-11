@@ -47,10 +47,11 @@ export default function CourseDetail({ course, lessons, currentLessonId }: Cours
           >
             <Link 
               href="/corsi" 
-              className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-white hover:text-white/90 transition-colors"
+              style={{ color: 'white' }}
             >
-              <ArrowLeft className="w-4 h-4" />
-              Torna ai corsi
+              <ArrowLeft className="w-4 h-4 text-white" />
+              <span className="text-white">Torna ai corsi</span>
             </Link>
           </motion.div>
 
@@ -167,50 +168,64 @@ export default function CourseDetail({ course, lessons, currentLessonId }: Cours
 
               {/* Lessons */}
               {lessons.length > 0 && (
-                <div className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-6">
-                    Contenuto del Corso
-                  </h2>
-                  <div className="space-y-2">
+                <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-8 shadow-2xl">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">
+                        Contenuto del Corso
+                      </h2>
+                      <p className="text-slate-400 text-sm">{lessons.length} lezioni disponibili</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
                     {lessons.map((lesson, index) => {
                       const isActive = currentLessonId === lesson.id;
                       return (
                         <Link
                           key={lesson.id}
                           href={`/corsi/${course.id}/lezioni/${lesson.id}`}
-                          className="no-underline"
+                          className="block"
                         >
                           <motion.div
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.4 + index * 0.05 }}
-                            className={`group flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                            className={`group flex items-center gap-4 p-4 rounded-xl transition-all duration-300 cursor-pointer ${
                               isActive
-                                ? 'border-emerald-400 bg-emerald-50 shadow-md'
-                                : 'border-slate-100 hover:border-emerald-300 bg-white hover:bg-emerald-50/50 hover:shadow-md'
+                                ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-400/50'
+                                : 'bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-emerald-500/30'
                             }`}
                           >
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-base transition-all duration-300 shadow-sm ${
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm transition-all duration-300 ${
                               isActive
-                                ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg'
-                                : 'bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700 group-hover:from-emerald-500 group-hover:to-teal-500 group-hover:text-white group-hover:shadow-lg'
+                                ? 'bg-gradient-to-br from-emerald-400 to-teal-400 text-white shadow-lg shadow-emerald-500/30'
+                                : 'bg-slate-700 text-slate-300 group-hover:bg-gradient-to-br group-hover:from-emerald-400 group-hover:to-teal-400 group-hover:text-white'
                             }`}>
                               {index + 1}
                             </div>
                             <div className="flex-grow min-w-0">
-                              <h3 className={`font-semibold transition-colors text-base ${
+                              <h3 className={`font-medium transition-colors text-sm ${
                                 isActive
-                                  ? 'text-emerald-700'
-                                  : 'text-slate-800 group-hover:text-emerald-600'
+                                  ? 'text-emerald-300'
+                                  : 'text-slate-200 group-hover:text-white'
                               }`}>
                                 {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
                               </h3>
                             </div>
-                            <PlayCircle className={`w-6 h-6 transition-colors flex-shrink-0 ${
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                               isActive
-                                ? 'text-emerald-500'
-                                : 'text-slate-400 group-hover:text-emerald-500'
-                            }`} />
+                                ? 'bg-emerald-400/20'
+                                : 'bg-slate-700/50 group-hover:bg-emerald-500/20'
+                            }`}>
+                              <PlayCircle className={`w-4 h-4 transition-colors ${
+                                isActive
+                                  ? 'text-emerald-400'
+                                  : 'text-slate-400 group-hover:text-emerald-400'
+                              }`} />
+                            </div>
                           </motion.div>
                         </Link>
                       );
