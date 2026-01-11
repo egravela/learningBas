@@ -135,6 +135,4 @@ export default function LessonView({ lesson, course }: LessonViewProps) {
     </>
   );
 }
-  );
-}
 
