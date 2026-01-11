@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, BookOpen, Home, LogIn, LogOut, User } from 'lucide-react';
+import { Menu, X, BookOpen, Home, LogIn, LogOut, User, Grid3X3, FolderOpen, Video, Target, ChevronDown } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import Logo from './Logo';
 
@@ -14,11 +14,30 @@ const navItems = [
   { href: '/corsi', label: 'Corsi', icon: BookOpen },
 ];
 
+const resourceItems = [
+  { href: '/risorse/materiali-didattici', label: 'Materiali Didattici', icon: FolderOpen, color: 'text-blue-500', bg: 'bg-blue-50' },
+  { href: '/risorse/lezioni-con-docente', label: 'Lezioni con Docente', icon: Video, color: 'text-purple-500', bg: 'bg-purple-50' },
+  { href: '/risorse/esercizi-accessibili', label: 'Esercizi Accessibili', icon: Target, color: 'text-teal-500', bg: 'bg-teal-50' },
+];
+
 export default function Header() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isResourceMenuOpen, setIsResourceMenuOpen] = useState(false);
+  const resourceMenuRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
+
+  // Chiudi il menu risorse quando si clicca fuori
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (resourceMenuRef.current && !resourceMenuRef.current.contains(event.target as Node)) {
+        setIsResourceMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Nascondi header nella pagina di login
   const isLoginPage = pathname === '/login';
@@ -101,6 +120,58 @@ export default function Header() {
                   </Link>
               </motion.div>
             ))}
+
+            {/* Resources Dropdown */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="relative"
+              ref={resourceMenuRef}
+            >
+              <button
+                onClick={() => setIsResourceMenuOpen(!isResourceMenuOpen)}
+                className={`group flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-300 ${
+                  isScrolled
+                    ? 'text-slate-700 hover:text-emerald-600 hover:bg-emerald-50'
+                    : 'text-white hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Grid3X3 className="w-4 h-4 transition-transform group-hover:scale-110" />
+                Risorse
+                <ChevronDown className={`w-3 h-3 transition-transform ${isResourceMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isResourceMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden"
+                  >
+                    <div className="p-2">
+                      {resourceItems.map((item, index) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setIsResourceMenuOpen(false)}
+                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group"
+                        >
+                          <div className={`w-10 h-10 rounded-lg ${item.bg} flex items-center justify-center transition-transform group-hover:scale-110`}>
+                            <item.icon className={`w-5 h-5 ${item.color}`} />
+                          </div>
+                          <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                            {item.label}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
             {/* Auth Section */}
             <motion.div
@@ -213,6 +284,31 @@ export default function Header() {
                   </Link>
                 </motion.div>
               ))}
+
+              {/* Mobile Resources */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 }}
+                className="pt-4 border-t border-slate-100"
+              >
+                <p className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Risorse
+                </p>
+                {resourceItems.map((item, index) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-50 transition-all"
+                  >
+                    <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center`}>
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                    </div>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                ))}
+              </motion.div>
 
               {/* Mobile Auth */}
               <motion.div
