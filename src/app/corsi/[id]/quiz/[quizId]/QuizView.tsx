@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ClipboardCheck, Clock, Award, CheckCircle, XCircle, ChevronRight, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, Clock, Award, CheckCircle, XCircle, ChevronRight, RotateCcw, Trophy, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import type { Quiz, Course, QuizQuestion } from '@/lib/api';
+import type { Quiz, Course, QuizQuestion, QuizResult } from '@/lib/api';
+import { checkQuizAnswers } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
 import SafeHtml from '@/components/SafeHtml';
 
@@ -132,6 +133,9 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
@@ -150,10 +154,19 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
     }));
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestionIndex < totalQuestions - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
+      // Invia le risposte al backend per la verifica
+      setIsSubmitting(true);
+      try {
+        const result = await checkQuizAnswers(quiz.id, selectedAnswers);
+        setQuizResult(result);
+      } catch (error) {
+        console.error('Error submitting quiz:', error);
+      }
+      setIsSubmitting(false);
       setShowResults(true);
     }
   };
@@ -169,11 +182,16 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setShowResults(false);
+    setQuizResult(null);
+    setShowCorrectAnswers(false);
   };
 
-  // Calcola il punteggio (simulato - in un'implementazione reale verificheremmo le risposte corrette)
+  // Calcola il punteggio dai risultati del backend o fallback locale
   const answeredQuestions = Object.keys(selectedAnswers).length;
-  const scorePercentage = Math.round((answeredQuestions / totalQuestions) * 100);
+  const scorePercentage = quizResult ? quizResult.score_percentage : Math.round((answeredQuestions / totalQuestions) * 100);
+  const correctCount = quizResult ? quizResult.correct_answers : answeredQuestions;
+  const passed = quizResult ? quizResult.passed : false;
+  const passingPercentage = quizResult ? quizResult.passing_percentage : 80;
 
   // Se non ci sono domande, mostra un messaggio
   if (questions.length === 0) {
@@ -231,9 +249,13 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
 
   // Quiz Results View
   if (showResults) {
+    const resultGradient = passed 
+      ? 'from-emerald-500 via-teal-500 to-cyan-500'
+      : 'from-red-500 via-orange-500 to-amber-500';
+    
     return (
       <>
-        <section className="relative pt-40 pb-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 overflow-hidden">
+        <section className={`relative pt-40 pb-20 bg-gradient-to-br ${resultGradient} overflow-hidden`}>
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.div
               initial={{ scale: 0 }}
@@ -241,7 +263,11 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-6"
             >
-              <Award className="w-12 h-12 text-white" />
+              {passed ? (
+                <Trophy className="w-12 h-12 text-white" />
+              ) : (
+                <AlertTriangle className="w-12 h-12 text-white" />
+              )}
             </motion.div>
             
             <motion.h1
@@ -250,24 +276,57 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
               transition={{ delay: 0.2 }}
               className="text-4xl font-bold text-white mb-4"
             >
-              Quiz Completato!
+              {passed ? 'Quiz Superato!' : 'Quiz Non Superato'}
             </motion.h1>
             
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-white/80 text-lg mb-8"
+              className="mb-8"
             >
-              Hai risposto a {answeredQuestions} domande su {totalQuestions}
+              <div className="inline-flex items-center gap-4 px-8 py-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-white">{scorePercentage}%</div>
+                  <div className="text-white/80 text-sm">Punteggio</div>
+                </div>
+                <div className="w-px h-12 bg-white/30" />
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-white">{correctCount}/{totalQuestions}</div>
+                  <div className="text-white/80 text-sm">Risposte Corrette</div>
+                </div>
+                <div className="w-px h-12 bg-white/30" />
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-white">{passingPercentage}%</div>
+                  <div className="text-white/80 text-sm">Soglia Minima</div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-white/90 text-lg mb-8"
+            >
+              {passed 
+                ? 'Complimenti! Hai dimostrato di aver appreso i contenuti del corso.' 
+                : `Per superare il quiz è necessario raggiungere almeno il ${passingPercentage}% di risposte corrette.`}
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex justify-center gap-4"
+              transition={{ delay: 0.5 }}
+              className="flex flex-wrap justify-center gap-4"
             >
+              <button
+                onClick={() => setShowCorrectAnswers(!showCorrectAnswers)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 text-white rounded-xl font-semibold hover:bg-white/30 transition-colors"
+              >
+                {showCorrectAnswers ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showCorrectAnswers ? 'Nascondi Risposte' : 'Vedi Risposte Corrette'}
+              </button>
               <button
                 onClick={handleRestartQuiz}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 text-white rounded-xl font-semibold hover:bg-white/30 transition-colors"
@@ -277,7 +336,9 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
               </button>
               <Link
                 href={`/corsi/${courseId}`}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-emerald-600 rounded-xl font-semibold hover:bg-white/90 transition-colors"
+                className={`inline-flex items-center gap-2 px-6 py-3 bg-white rounded-xl font-semibold transition-colors ${
+                  passed ? 'text-emerald-600 hover:bg-emerald-50' : 'text-orange-600 hover:bg-orange-50'
+                }`}
               >
                 Torna al corso
               </Link>
@@ -292,28 +353,109 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
         </section>
 
         <section className="py-16 bg-slate-50">
-          <div className="max-w-2xl mx-auto px-4">
+          <div className="max-w-3xl mx-auto px-4">
             <div className="bg-white rounded-2xl p-8 shadow-lg">
               <h2 className="text-xl font-bold text-slate-900 mb-6 text-center">Riepilogo Risposte</h2>
-              <div className="space-y-3">
+              
+              <div className="space-y-4">
                 {questions.map((q, index) => {
+                  const result = quizResult?.results?.[index];
+                  const isCorrect = result?.is_correct ?? false;
                   const answered = selectedAnswers[index] !== undefined;
+                  const userAnswerId = selectedAnswers[index];
+                  
                   return (
-                    <div
+                    <motion.div
                       key={q.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg ${
-                        answered ? 'bg-emerald-50' : 'bg-slate-50'
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={`p-4 rounded-xl border-2 ${
+                        isCorrect 
+                          ? 'border-emerald-200 bg-emerald-50' 
+                          : answered 
+                          ? 'border-red-200 bg-red-50' 
+                          : 'border-slate-200 bg-slate-50'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        answered ? 'bg-emerald-500 text-white' : 'bg-slate-300 text-slate-600'
-                      }`}>
-                        {answered ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                      <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          isCorrect 
+                            ? 'bg-emerald-500 text-white' 
+                            : answered
+                            ? 'bg-red-500 text-white' 
+                            : 'bg-slate-300 text-slate-600'
+                        }`}>
+                          {isCorrect ? (
+                            <CheckCircle className="w-4 h-4" />
+                          ) : answered ? (
+                            <XCircle className="w-4 h-4" />
+                          ) : (
+                            <span className="text-sm font-bold">{index + 1}</span>
+                          )}
+                        </div>
+                        <div className="flex-grow">
+                          <h3 className="font-medium text-slate-900 mb-2">
+                            {q.title?.rendered ? stripHtml(q.title.rendered) : `Domanda ${index + 1}`}
+                          </h3>
+                          
+                          {showCorrectAnswers && result && (
+                            <AnimatePresence>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mt-3 space-y-2"
+                              >
+                                {result.answers.map((answer) => {
+                                  const isUserAnswer = answer.id === userAnswerId;
+                                  const isCorrectAnswer = answer.correct;
+                                  
+                                  let bgColor = 'bg-white border-slate-200';
+                                  let textColor = 'text-slate-600';
+                                  let icon = null;
+                                  
+                                  if (isCorrectAnswer) {
+                                    bgColor = 'bg-emerald-100 border-emerald-300';
+                                    textColor = 'text-emerald-800';
+                                    icon = <CheckCircle className="w-4 h-4 text-emerald-600" />;
+                                  } else if (isUserAnswer && !isCorrectAnswer) {
+                                    bgColor = 'bg-red-100 border-red-300';
+                                    textColor = 'text-red-800';
+                                    icon = <XCircle className="w-4 h-4 text-red-600" />;
+                                  }
+                                  
+                                  return (
+                                    <div
+                                      key={answer.id}
+                                      className={`p-3 rounded-lg border ${bgColor} flex items-center gap-2`}
+                                    >
+                                      <span className={`text-sm ${textColor}`}>
+                                        {answer.text}
+                                      </span>
+                                      {icon && <span className="ml-auto">{icon}</span>}
+                                      {isCorrectAnswer && (
+                                        <span className="text-xs font-medium text-emerald-600 ml-auto">
+                                          Risposta corretta
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                                
+                                {!result.answers.length && result.correct_answer_text && (
+                                  <div className="p-3 rounded-lg border bg-emerald-100 border-emerald-300">
+                                    <span className="text-sm text-emerald-800">
+                                      <strong>Risposta corretta:</strong> {result.correct_answer_text}
+                                    </span>
+                                  </div>
+                                )}
+                              </motion.div>
+                            </AnimatePresence>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-sm text-slate-700 flex-grow">
-                        {q.title?.rendered ? stripHtml(q.title.rendered) : `Domanda ${index + 1}`}
-                      </span>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -578,9 +720,18 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
 
                 <button
                   onClick={handleNextQuestion}
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {currentQuestionIndex === totalQuestions - 1 ? (
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Verifica in corso...
+                    </>
+                  ) : currentQuestionIndex === totalQuestions - 1 ? (
                     <>
                       Termina Quiz
                       <CheckCircle className="w-5 h-5" />

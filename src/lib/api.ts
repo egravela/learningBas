@@ -497,6 +497,57 @@ export async function getPublicCourses(page = 1, perPage = 10): Promise<Course[]
 }
 
 // ==========================================
+// Quiz Results API
+// ==========================================
+
+export interface QuizResult {
+  quiz_id: number;
+  total_questions: number;
+  correct_answers: number;
+  score_percentage: number;
+  passing_percentage: number;
+  passed: boolean;
+  results: Array<{
+    question_id: number;
+    question_title: string;
+    user_answer_id: string | null;
+    correct_answer_id: string | null;
+    correct_answer_text: string;
+    is_correct: boolean;
+    answers: Array<{
+      id: string;
+      text: string;
+      html?: string;
+      correct?: boolean;
+    }>;
+  }>;
+}
+
+// Verifica le risposte del quiz e ottiene i risultati
+export async function checkQuizAnswers(quizId: number, userAnswers: Record<number, string>): Promise<QuizResult | null> {
+  try {
+    const response = await fetch(
+      `${WORDPRESS_URL}/wp-json/learndash-quiz-api/v1/quiz/${quizId}/check-answers`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(userAnswers),
+      }
+    );
+    
+    if (!response.ok) {
+      console.error('Error checking quiz answers:', response.status);
+      return null;
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking quiz answers:', error);
+    return null;
+  }
+}
+
+// ==========================================
 // Custom Post Types API
 // ==========================================
 
