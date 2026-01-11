@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, BookOpen, Clock, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, FileText, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 import type { Lesson, Course } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
@@ -22,9 +22,10 @@ interface LessonViewProps {
   prevLesson: Lesson | null;
   nextLesson: Lesson | null;
   courseId: number;
+  allLessons?: Lesson[];
 }
 
-export default function LessonView({ lesson, course, prevLesson, nextLesson, courseId }: LessonViewProps) {
+export default function LessonView({ lesson, course, prevLesson, nextLesson, courseId, allLessons = [] }: LessonViewProps) {
   const lessonTitle = lesson.title?.rendered ? stripHtml(lesson.title.rendered) : 'Lezione';
   const courseTitle = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
   const prevLessonTitle = prevLesson?.title?.rendered ? stripHtml(prevLesson.title.rendered) : 'Lezione Precedente';
@@ -121,23 +122,26 @@ export default function LessonView({ lesson, course, prevLesson, nextLesson, cou
       {/* Content Section */}
       <section className="py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50 mb-8"
-          >
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="lg:col-span-2"
+            >
+              <div className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50 mb-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-6">
               Contenuto della Lezione
             </h2>
-            <SafeHtml
-              html={lesson.content.rendered}
-              className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-img:shadow-lg"
-            />
-          </motion.div>
+                <SafeHtml
+                  html={lesson.content.rendered}
+                  className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-img:shadow-lg"
+                />
+              </div>
 
-          {/* Navigation Links */}
-          <div className="grid md:grid-cols-2 gap-6">
+              {/* Navigation Links */}
+              <div className="grid md:grid-cols-2 gap-6">
             {/* Previous Lesson */}
             {prevLesson ? (
               <Link href={`/corsi/${courseId}/lezioni/${prevLesson.id}`}>
@@ -208,6 +212,62 @@ export default function LessonView({ lesson, course, prevLesson, nextLesson, cou
                   </div>
                 </div>
               </div>
+            )}
+              </div>
+            </motion.div>
+
+            {/* Sidebar - Lessons List */}
+            {allLessons.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="lg:col-span-1"
+              >
+                <div className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 sticky top-24">
+                  <h3 className="text-lg font-bold text-slate-900 mb-4">
+                    Lezioni del Corso
+                  </h3>
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                    {allLessons.map((l, index) => {
+                      const isActive = l.id === lesson.id;
+                      return (
+                        <Link
+                          key={l.id}
+                          href={`/corsi/${courseId}/lezioni/${l.id}`}
+                          className="no-underline"
+                        >
+                          <div
+                            className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+                              isActive
+                                ? 'bg-emerald-50 border-2 border-emerald-400'
+                                : 'hover:bg-slate-50 border-2 border-transparent'
+                            }`}
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                              isActive
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate ${
+                                isActive ? 'text-emerald-700' : 'text-slate-700'
+                              }`}>
+                                {l.title?.rendered ? stripHtml(l.title.rendered) : `Lezione ${index + 1}`}
+                              </p>
+                            </div>
+                            {isActive && (
+                              <PlayCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </motion.div>
             )}
           </div>
         </div>

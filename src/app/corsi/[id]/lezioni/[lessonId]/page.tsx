@@ -67,6 +67,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       prevLesson={prevLesson}
       nextLesson={nextLesson}
       courseId={courseId}
+      allLessons={allLessons}
     />
   );
 }
