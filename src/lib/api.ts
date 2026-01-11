@@ -383,8 +383,11 @@ export async function getQuizQuestions(quizId: number): Promise<QuizQuestion[]> 
 // Recupera le risposte di una domanda
 export async function getQuestionAnswers(questionId: number): Promise<Array<{ id: string; answer: string; correct?: boolean }>> {
   try {
-    // Prova diversi endpoint per le risposte
+    // Prova diversi endpoint per le risposte, incluso il plugin custom
     const endpoints = [
+      // Plugin custom LearnDash Quiz API
+      `${WORDPRESS_URL}/wp-json/learndash-quiz-api/v1/question/${questionId}/answers`,
+      // Endpoint standard LearnDash
       `${WORDPRESS_URL}/wp-json/ldlms/v2/sfwd-question/${questionId}/answers`,
       `${WORDPRESS_URL}/wp-json/wp/v2/sfwd-question/${questionId}?_fields=meta`,
     ];
@@ -398,6 +401,15 @@ export async function getQuestionAnswers(questionId: number): Promise<Array<{ id
         
         if (response.ok) {
           const data = await response.json();
+          
+          // Risposta dal plugin custom (formato { question_id, answers: [...] })
+          if (data.answers && Array.isArray(data.answers)) {
+            return data.answers.map((item: { id?: string; text?: string; html?: string }, idx: number) => ({
+              id: item.id || `answer_${idx}`,
+              answer: item.text || item.html || '',
+              correct: undefined // Non esponiamo le risposte corrette per sicurezza
+            }));
+          }
           
           // Se è un array di risposte
           if (Array.isArray(data)) {

@@ -180,7 +180,7 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
     return (
       <>
         {/* Hero Section */}
-        <section className="relative pt-32 pb-20 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 overflow-hidden">
+        <section className="relative pt-40 pb-20 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 overflow-hidden">
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -233,7 +233,7 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
   if (showResults) {
     return (
       <>
-        <section className="relative pt-32 pb-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 overflow-hidden">
+        <section className="relative pt-40 pb-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 overflow-hidden">
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.div
               initial={{ scale: 0 }}
@@ -328,7 +328,7 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
   if (!quizStarted) {
     return (
       <>
-        <section className="relative pt-32 pb-20 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 overflow-hidden">
+        <section className="relative pt-40 pb-20 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 overflow-hidden">
           <div 
             className="absolute inset-0 opacity-10"
             style={{
@@ -452,7 +452,7 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
   // Quiz Question View
   return (
     <>
-      <section className="relative pt-24 pb-8 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500">
+      <section className="relative pt-32 pb-8 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-4">
             <span className="text-white/80 text-sm">
