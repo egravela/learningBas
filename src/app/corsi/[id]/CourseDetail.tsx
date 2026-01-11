@@ -168,15 +168,27 @@ export default function CourseDetail({ course, lessons, currentLessonId }: Cours
 
               {/* Lessons */}
               {lessons.length > 0 && (
-                <div className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50">
-                  <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-emerald-600" />
-                    Contenuto del Corso
-                    <span className="ml-auto text-xs font-normal text-slate-500">{lessons.length} lezioni</span>
-                  </h2>
-                  <div className="divide-y divide-slate-100">
+                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
+                  {/* Header */}
+                  <div className="px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-emerald-500" />
+                        Contenuto del Corso
+                      </h2>
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                        {lessons.length} lezioni
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Lessons List */}
+                  <div className="p-3">
                     {lessons.map((lesson, index) => {
                       const isActive = currentLessonId === lesson.id;
+                      const isFirst = index === 0;
+                      const isLast = index === lessons.length - 1;
+                      
                       return (
                         <Link
                           key={lesson.id}
@@ -184,34 +196,53 @@ export default function CourseDetail({ course, lessons, currentLessonId }: Cours
                           className="block"
                         >
                           <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 + index * 0.03 }}
-                            className={`group flex items-center gap-3 py-3 px-2 -mx-2 rounded-lg transition-all duration-200 ${
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 + index * 0.03 }}
+                            className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
                               isActive
-                                ? 'bg-emerald-50'
+                                ? 'bg-emerald-50 shadow-sm'
                                 : 'hover:bg-slate-50'
                             }`}
                           >
-                            <span className={`w-6 h-6 rounded text-xs font-semibold flex items-center justify-center flex-shrink-0 ${
+                            {/* Number Badge */}
+                            <div className="relative">
+                              <span className={`w-7 h-7 rounded-full text-xs font-semibold flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                                isActive
+                                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                                  : 'bg-slate-100 text-slate-500 group-hover:bg-emerald-500 group-hover:text-white group-hover:shadow-md group-hover:shadow-emerald-500/20'
+                              }`}>
+                                {index + 1}
+                              </span>
+                              {/* Connector Line */}
+                              {!isLast && (
+                                <div className="absolute top-7 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-slate-200" />
+                              )}
+                            </div>
+                            
+                            {/* Lesson Title */}
+                            <div className="flex-grow min-w-0">
+                              <span className={`text-sm block truncate transition-colors duration-200 ${
+                                isActive
+                                  ? 'text-emerald-700 font-medium'
+                                  : 'text-slate-600 group-hover:text-slate-900'
+                              }`}>
+                                {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
+                              </span>
+                            </div>
+                            
+                            {/* Play Icon */}
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                               isActive
-                                ? 'bg-emerald-500 text-white'
-                                : 'bg-slate-100 text-slate-600 group-hover:bg-emerald-100 group-hover:text-emerald-700'
+                                ? 'bg-emerald-500/20'
+                                : 'bg-transparent group-hover:bg-emerald-100'
                             }`}>
-                              {index + 1}
-                            </span>
-                            <span className={`text-sm flex-grow min-w-0 truncate ${
-                              isActive
-                                ? 'text-emerald-700 font-medium'
-                                : 'text-slate-700 group-hover:text-slate-900'
-                            }`}>
-                              {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
-                            </span>
-                            <PlayCircle className={`w-4 h-4 flex-shrink-0 ${
-                              isActive
-                                ? 'text-emerald-500'
-                                : 'text-slate-300 group-hover:text-emerald-500'
-                            }`} />
+                              <PlayCircle className={`w-3.5 h-3.5 transition-all duration-200 ${
+                                isActive
+                                  ? 'text-emerald-600'
+                                  : 'text-slate-400 group-hover:text-emerald-500 group-hover:scale-110'
+                              }`} />
+                            </div>
                           </motion.div>
                         </Link>
                       );
