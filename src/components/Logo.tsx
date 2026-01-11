@@ -40,8 +40,8 @@ export default function Logo({
         width={width}
         height={height}
         className={cn(
-          'h-auto transition-all duration-300',
-          !isLightVariant && !isDarkVariant && 'h-14 w-auto' // Default
+          'h-auto w-auto transition-all duration-300',
+          // Non applicare h-14 di default, lascia che sia gestito dalla className passata come prop
         )}
         priority
       />

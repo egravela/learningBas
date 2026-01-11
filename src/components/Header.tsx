@@ -46,10 +46,14 @@ export default function Header() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="flex items-center gap-3"
+              animate={{
+                scale: isScrolled ? 0.85 : 1,
+              }}
+              transition={{ duration: 0.3 }}
             >
               <Logo 
                 variant={isScrolled ? 'default' : 'light'} 
-                className="h-14"
+                className={isScrolled ? 'h-12' : 'h-14'}
               />
             </motion.div>
           </Link>
