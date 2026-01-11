@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, BookOpen, Home, LogIn, LogOut, User } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
