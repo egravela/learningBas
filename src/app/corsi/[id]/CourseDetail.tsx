@@ -21,9 +21,10 @@ interface CourseDetailProps {
   course: Course;
   lessons: Lesson[];
   currentLessonId?: number;
+  isAuthenticated?: boolean;
 }
 
-export default function CourseDetail({ course, lessons, currentLessonId }: CourseDetailProps) {
+export default function CourseDetail({ course, lessons, currentLessonId, isAuthenticated = false }: CourseDetailProps) {
   const title = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
   
   return (
@@ -312,13 +313,23 @@ export default function CourseDetail({ course, lessons, currentLessonId }: Cours
                   </div>
                 </div>
 
-                <Link
-                  href="/login"
-                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  <PlayCircle className="w-5 h-5" />
-                  Accedi per iniziare
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href={lessons.length > 0 ? `/corsi/${course.id}/lezioni/${lessons[0].id}` : '#'}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    <PlayCircle className="w-5 h-5" />
+                    Inizia il corso
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    <PlayCircle className="w-5 h-5" />
+                    Accedi per iniziare
+                  </Link>
+                )}
               </div>
             </motion.div>
           </div>

@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import CourseDetail from './CourseDetail';
 import { getCourse, getCourseLessons } from '@/lib/api';
+import { auth } from '@/lib/auth';
 
 interface CoursePageProps {
   params: Promise<{ id: string }>;
@@ -34,15 +35,16 @@ export default async function CoursePage({ params }: CoursePageProps) {
   const { id } = await params;
   const courseId = Number(id);
   
-  const [course, lessons] = await Promise.all([
+  const [course, lessons, session] = await Promise.all([
     getCourse(courseId),
     getCourseLessons(courseId),
+    auth(),
   ]);
 
   if (!course) {
     notFound();
   }
 
-  return <CourseDetail course={course} lessons={lessons} />;
+  return <CourseDetail course={course} lessons={lessons} isAuthenticated={!!session} />;
 }
 
