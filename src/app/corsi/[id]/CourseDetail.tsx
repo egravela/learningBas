@@ -172,23 +172,27 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
                   </h2>
                   <div className="space-y-3">
                     {lessons.map((lesson, index) => (
-                      <motion.div
+                      <Link
                         key={lesson.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 + index * 0.05 }}
-                        className="group flex items-center gap-4 p-4 rounded-xl bg-slate-50 hover:bg-emerald-50 transition-colors cursor-pointer"
+                        href={`/corsi/${course.id}/lezioni/${lesson.id}`}
                       >
-                        <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                          {index + 1}
-                        </div>
-                        <div className="flex-grow">
-                          <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors">
-                            {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
-                          </h3>
-                        </div>
-                        <PlayCircle className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                      </motion.div>
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.4 + index * 0.05 }}
+                          className="group flex items-center gap-4 p-4 rounded-xl bg-slate-50 hover:bg-emerald-50 transition-colors cursor-pointer"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                            {index + 1}
+                          </div>
+                          <div className="flex-grow">
+                            <h3 className="font-semibold text-slate-800 group-hover:text-emerald-600 transition-colors">
+                              {lesson.title?.rendered ? stripHtml(lesson.title.rendered) : `Lezione ${index + 1}`}
+                            </h3>
+                          </div>
+                          <PlayCircle className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                        </motion.div>
+                      </Link>
                     ))}
                   </div>
                 </div>

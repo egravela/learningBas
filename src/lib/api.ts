@@ -47,6 +47,9 @@ export interface Lesson {
   };
   course: number;
   menu_order: number;
+  link?: string;
+  permalink?: string;
+  slug?: string;
 }
 
 export interface Topic {
