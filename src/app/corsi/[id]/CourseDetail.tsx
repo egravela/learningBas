@@ -203,7 +203,7 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
               className="space-y-6"
             >
               {/* Course Info Card */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 sticky top-24">
+              <div className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50">
                 <h3 className="text-lg font-bold text-slate-900 mb-6">
                   Informazioni Corso
                 </h3>
