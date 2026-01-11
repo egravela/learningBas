@@ -1,12 +1,112 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ClipboardCheck, Clock, Award, CheckCircle, XCircle, ChevronRight, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import type { Quiz, Course, QuizQuestion } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
 import SafeHtml from '@/components/SafeHtml';
+
+interface ParsedAnswer {
+  id: string;
+  text: string;
+}
+
+// Funzione per estrarre le risposte dal contenuto HTML della domanda
+function extractAnswersFromContent(content: string): ParsedAnswer[] {
+  const answers: ParsedAnswer[] = [];
+  
+  // Prova a trovare liste (ul/ol con li)
+  const listItemRegex = /<li[^>]*>([^<]+)<\/li>/gi;
+  let match;
+  let index = 0;
+  while ((match = listItemRegex.exec(content)) !== null) {
+    answers.push({
+      id: `answer_${index}`,
+      text: stripHtml(match[1]).trim()
+    });
+    index++;
+  }
+  
+  // Se non trova liste, prova con paragrafi che iniziano con lettere/numeri
+  if (answers.length === 0) {
+    const paragraphRegex = /<p[^>]*>([A-Za-z0-9][).:\s]+[^<]+)<\/p>/gi;
+    while ((match = paragraphRegex.exec(content)) !== null) {
+      answers.push({
+        id: `answer_${index}`,
+        text: stripHtml(match[1]).trim()
+      });
+      index++;
+    }
+  }
+  
+  // Prova anche con pattern tipo "A) risposta" o "1. risposta"
+  if (answers.length === 0) {
+    const lines = stripHtml(content).split(/\n|\r/).filter(line => line.trim());
+    const optionRegex = /^[A-Za-z0-9][).:\s]+(.+)$/;
+    lines.forEach((line, idx) => {
+      const optionMatch = line.trim().match(optionRegex);
+      if (optionMatch) {
+        answers.push({
+          id: `answer_${idx}`,
+          text: optionMatch[1].trim()
+        });
+      }
+    });
+  }
+  
+  return answers;
+}
+
+// Funzione per ottenere le risposte da una domanda in qualsiasi formato
+function getQuestionAnswers(question: QuizQuestion): ParsedAnswer[] {
+  // 1. Se ci sono risposte nel formato array standard
+  if (question.answers && question.answers.length > 0) {
+    return question.answers.map((a, i) => ({
+      id: a.id || `answer_${i}`,
+      text: a.text
+    }));
+  }
+  
+  // 2. Prova a estrarre dal contenuto HTML
+  if (question.content?.rendered) {
+    const extracted = extractAnswersFromContent(question.content.rendered);
+    if (extracted.length > 0) {
+      return extracted;
+    }
+  }
+  
+  // 3. Prova con il campo question
+  if (question.question) {
+    const extracted = extractAnswersFromContent(question.question);
+    if (extracted.length > 0) {
+      return extracted;
+    }
+  }
+  
+  return [];
+}
+
+// Funzione per ottenere il testo della domanda (senza le opzioni di risposta)
+function getQuestionText(question: QuizQuestion): string {
+  // Prima prova con il titolo
+  if (question.title?.rendered) {
+    return question.title.rendered;
+  }
+  
+  // Poi con il campo question
+  if (question.question) {
+    return question.question;
+  }
+  
+  // Infine con il contenuto
+  if (question.content?.rendered) {
+    return question.content.rendered;
+  }
+  
+  return 'Domanda';
+}
 
 interface QuizViewProps {
   quiz: Quiz;
@@ -27,7 +127,13 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
-  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const progress = totalQuestions > 0 ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0;
+
+  // Memoizza le risposte della domanda corrente
+  const currentAnswers = useMemo(() => {
+    if (!currentQuestion) return [];
+    return getQuestionAnswers(currentQuestion);
+  }, [currentQuestion]);
 
   const handleSelectAnswer = (answerId: string) => {
     setSelectedAnswers(prev => ({
@@ -373,22 +479,23 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
               className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50"
             >
               <h2 className="text-xl font-bold text-slate-900 mb-6">
-                {currentQuestion?.title?.rendered 
-                  ? stripHtml(currentQuestion.title.rendered) 
-                  : `Domanda ${currentQuestionIndex + 1}`}
+                Domanda {currentQuestionIndex + 1}
               </h2>
 
               {/* Question Content */}
-              {currentQuestion?.question && (
+              {currentQuestion && (
                 <div className="mb-6">
-                  <SafeHtml html={currentQuestion.question} className="prose prose-slate max-w-none" />
+                  <SafeHtml 
+                    html={getQuestionText(currentQuestion)} 
+                    className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:text-base" 
+                  />
                 </div>
               )}
 
               {/* Answers */}
-              {currentQuestion?.answers && currentQuestion.answers.length > 0 ? (
+              {currentAnswers.length > 0 ? (
                 <div className="space-y-3 mb-8">
-                  {currentQuestion.answers.map((answer, index) => {
+                  {currentAnswers.map((answer, index) => {
                     const isSelected = selectedAnswers[currentQuestionIndex] === answer.id;
                     return (
                       <button
@@ -418,8 +525,24 @@ export default function QuizView({ quiz, course, questions = [], courseId }: Qui
                   })}
                 </div>
               ) : (
-                <div className="mb-8 p-4 bg-slate-50 rounded-xl text-center text-slate-500">
-                  Nessuna opzione di risposta disponibile per questa domanda
+                <div className="mb-8 p-4 bg-amber-50 rounded-xl">
+                  <p className="text-amber-800 text-sm mb-2 font-medium">
+                    Rispondi alla domanda sopra
+                  </p>
+                  <p className="text-amber-700 text-xs">
+                    Il contenuto della domanda include le opzioni di risposta. 
+                    Leggi attentamente e seleziona &quot;Risposta data&quot; quando hai finito.
+                  </p>
+                  <button
+                    onClick={() => handleSelectAnswer('answered')}
+                    className={`mt-4 px-4 py-2 rounded-lg font-medium transition-all ${
+                      selectedAnswers[currentQuestionIndex] === 'answered'
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                    }`}
+                  >
+                    {selectedAnswers[currentQuestionIndex] === 'answered' ? '✓ Risposta data' : 'Segna come risposto'}
+                  </button>
                 </div>
               )}
 

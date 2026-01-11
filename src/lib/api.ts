@@ -83,13 +83,26 @@ export interface QuizQuestion {
   title: {
     rendered: string;
   };
+  content?: {
+    rendered: string;
+  };
   question?: string;
+  // LearnDash può restituire le risposte in diversi formati
   answers?: Array<{
     id: string;
     text: string;
     correct?: boolean;
   }>;
+  // Formato alternativo per le risposte (oggetto con chiavi)
+  _piechartData?: Record<string, { answer: string; correct: boolean }>;
+  // Metadati LearnDash
+  meta?: {
+    _answerData?: string; // JSON string con le risposte
+    _answerType?: string;
+    _points?: number;
+  };
   question_type?: string;
+  quiz?: number;
 }
 
 export interface User {
