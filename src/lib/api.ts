@@ -69,8 +69,13 @@ export interface Quiz {
   title: {
     rendered: string;
   };
+  content?: {
+    rendered: string;
+  };
   course: number;
   lesson: number;
+  link?: string;
+  slug?: string;
 }
 
 export interface User {
@@ -213,6 +218,28 @@ export async function getCourseQuizzes(courseId: number): Promise<Quiz[]> {
   } catch (error) {
     console.error('Error fetching quizzes:', error);
     return [];
+  }
+}
+
+// Recupera un singolo quiz
+export async function getQuiz(id: number): Promise<Quiz | null> {
+  try {
+    const response = await fetch(
+      `${WORDPRESS_URL}/wp-json/ldlms/v2/sfwd-quiz/${id}`,
+      {
+        headers: getAuthHeaders(),
+        next: { revalidate: 60 },
+      }
+    );
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching quiz:', error);
+    return null;
   }
 }
 
