@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { getLesson, getCourse, getCourseLessons } from '@/lib/api';
+import { getLesson, getCourse, getCourseLessons, getLessonTopics, getCourseQuizzes } from '@/lib/api';
 import LessonView from './LessonView';
 
 interface LessonPageProps {
@@ -40,20 +40,25 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const courseId = Number(id);
   const lessonIdNum = Number(lessonId);
   
-  const [lesson, course, allLessons] = await Promise.all([
+  const [lesson, course, allLessons, quizzes] = await Promise.all([
     getLesson(lessonIdNum),
     getCourse(courseId),
     getCourseLessons(courseId),
+    getCourseQuizzes(courseId),
   ]);
 
   if (!lesson || !course) {
     redirect('/corsi');
   }
 
+  // Recupera i topic della lezione
+  const topics = await getLessonTopics(lessonIdNum, courseId);
+
   // Trova l'indice della lezione corrente e le lezioni precedente/successiva
   const currentIndex = allLessons.findIndex(l => l.id === lessonIdNum);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
+  const isLastLesson = currentIndex === allLessons.length - 1;
 
   // Costruisci l'URL WordPress della lezione (non usato ma mantenuto per compatibilità)
   const wpLessonUrl = `${process.env.NEXT_PUBLIC_WORDPRESS_URL || 'https://accessibilita.regione.basilicata.it'}/sfwd-lessons/${lesson.slug || `lesson-${lessonId}`}`;
@@ -68,6 +73,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
       nextLesson={nextLesson}
       courseId={courseId}
       allLessons={allLessons}
+      topics={topics}
+      quizzes={quizzes}
+      isLastLesson={isLastLesson}
     />
   );
 }

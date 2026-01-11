@@ -78,6 +78,20 @@ export interface Quiz {
   slug?: string;
 }
 
+export interface QuizQuestion {
+  id: number;
+  title: {
+    rendered: string;
+  };
+  question?: string;
+  answers?: Array<{
+    id: string;
+    text: string;
+    correct?: boolean;
+  }>;
+  question_type?: string;
+}
+
 export interface User {
   id: number;
   username: string;
@@ -308,6 +322,29 @@ export async function getQuiz(id: number): Promise<Quiz | null> {
   } catch (error) {
     console.error('Error fetching quiz:', error);
     return null;
+  }
+}
+
+// Recupera le domande di un quiz
+export async function getQuizQuestions(quizId: number): Promise<QuizQuestion[]> {
+  try {
+    const response = await fetch(
+      `${WORDPRESS_URL}/wp-json/ldlms/v2/sfwd-question?quiz=${quizId}&per_page=100`,
+      {
+        headers: getAuthHeaders(),
+        next: { revalidate: 60 },
+      }
+    );
+    
+    if (!response.ok) {
+      console.error('Error fetching quiz questions:', response.status);
+      return [];
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching quiz questions:', error);
+    return [];
   }
 }
 

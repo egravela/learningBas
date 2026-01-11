@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, BookOpen, Clock, FileText, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, FileText, ChevronLeft, ChevronRight, PlayCircle, ClipboardCheck, Layers } from 'lucide-react';
 import Link from 'next/link';
-import type { Lesson, Course } from '@/lib/api';
+import type { Lesson, Course, Topic, Quiz } from '@/lib/api';
 import { stripHtml } from '@/lib/utils';
 import SafeHtml from '@/components/SafeHtml';
 
@@ -23,9 +23,22 @@ interface LessonViewProps {
   nextLesson: Lesson | null;
   courseId: number;
   allLessons?: Lesson[];
+  topics?: Topic[];
+  quizzes?: Quiz[];
+  isLastLesson?: boolean;
 }
 
-export default function LessonView({ lesson, course, prevLesson, nextLesson, courseId, allLessons = [] }: LessonViewProps) {
+export default function LessonView({ 
+  lesson, 
+  course, 
+  prevLesson, 
+  nextLesson, 
+  courseId, 
+  allLessons = [],
+  topics = [],
+  quizzes = [],
+  isLastLesson = false
+}: LessonViewProps) {
   const lessonTitle = lesson.title?.rendered ? stripHtml(lesson.title.rendered) : 'Lezione';
   const courseTitle = course.title?.rendered ? stripHtml(course.title.rendered) : 'Corso';
   const prevLessonTitle = prevLesson?.title?.rendered ? stripHtml(prevLesson.title.rendered) : 'Lezione Precedente';
@@ -131,14 +144,96 @@ export default function LessonView({ lesson, course, prevLesson, nextLesson, cou
               className="lg:col-span-2"
             >
               <div className="bg-white rounded-2xl p-8 shadow-lg shadow-slate-200/50 mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">
-              Contenuto della Lezione
-            </h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">
+                  Contenuto della Lezione
+                </h2>
                 <SafeHtml
                   html={lesson.content.rendered}
                   className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-a:text-emerald-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-img:shadow-lg"
                 />
               </div>
+
+              {/* Topics Section */}
+              {topics.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100 mb-8">
+                  <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-indigo-500" />
+                        Argomenti della Lezione
+                      </h3>
+                      <span className="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
+                        {topics.length} {topics.length === 1 ? 'argomento' : 'argomenti'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="divide-y divide-slate-100">
+                    {topics.map((topic, index) => (
+                      <motion.div
+                        key={topic.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 + index * 0.05 }}
+                        className="p-6"
+                      >
+                        <h4 className="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          {topic.title?.rendered ? stripHtml(topic.title.rendered) : `Argomento ${index + 1}`}
+                        </h4>
+                        <SafeHtml
+                          html={topic.content.rendered}
+                          className="prose prose-sm prose-slate max-w-none prose-headings:text-slate-800 prose-p:text-slate-600"
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quiz Section - Only show on last lesson */}
+              {isLastLesson && quizzes.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 shadow-lg mb-8"
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                      <ClipboardCheck className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        Complimenti! Hai completato tutte le lezioni
+                      </h3>
+                      <p className="text-white/80 text-sm">
+                        Ora puoi sostenere il quiz di valutazione
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {quizzes.map((quiz) => (
+                      <Link
+                        key={quiz.id}
+                        href={`/corsi/${courseId}/quiz/${quiz.id}`}
+                        className="block"
+                      >
+                        <div className="bg-white/10 hover:bg-white/20 rounded-xl p-4 transition-all duration-200 flex items-center gap-3">
+                          <ClipboardCheck className="w-5 h-5 text-white" />
+                          <span className="text-white font-medium flex-grow">
+                            {quiz.title?.rendered ? stripHtml(quiz.title.rendered) : 'Quiz'}
+                          </span>
+                          <span className="text-white/80 text-sm">Inizia →</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Navigation Links */}
               <div className="grid md:grid-cols-2 gap-6">
