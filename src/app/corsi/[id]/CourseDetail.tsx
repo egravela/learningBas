@@ -202,8 +202,29 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
               transition={{ delay: 0.4 }}
               className="space-y-6"
             >
-              {/* Course Info Card */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50">
+              {/* Features - Prima */}
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl p-6 text-white">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <Award className="w-5 h-5" />
+                  Cosa imparerai
+                </h3>
+                <ul className="space-y-3">
+                  {[
+                    'Fondamenti dell\'accessibilità web',
+                    'Linee guida WCAG 2.1',
+                    'Tecniche di verifica',
+                    'Best practices operative',
+                  ].map((item, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <span className="text-white/90">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Course Info Card - Dopo, sticky */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-200/50 sticky top-24">
                 <h3 className="text-lg font-bold text-slate-900 mb-6">
                   Informazioni Corso
                 </h3>
@@ -241,27 +262,6 @@ export default function CourseDetail({ course, lessons }: CourseDetailProps) {
                   <PlayCircle className="w-5 h-5" />
                   Accedi per iniziare
                 </Link>
-              </div>
-
-              {/* Features */}
-              <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl p-6 text-white">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Award className="w-5 h-5" />
-                  Cosa imparerai
-                </h3>
-                <ul className="space-y-3">
-                  {[
-                    'Fondamenti dell\'accessibilità web',
-                    'Linee guida WCAG 2.1',
-                    'Tecniche di verifica',
-                    'Best practices operative',
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                      <span className="text-white/90">{item}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             </motion.div>
           </div>
