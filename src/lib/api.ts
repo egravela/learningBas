@@ -92,6 +92,12 @@ export interface QuizQuestion {
     id: string;
     text: string;
     correct?: boolean;
+  }> | null;
+  // Risposte recuperate separatamente
+  fetchedAnswers?: Array<{
+    id: string;
+    answer: string;
+    correct?: boolean;
   }>;
   // Formato alternativo per le risposte (oggetto con chiavi)
   _piechartData?: Record<string, { answer: string; correct: boolean }>;
@@ -354,9 +360,78 @@ export async function getQuizQuestions(quizId: number): Promise<QuizQuestion[]> 
       return [];
     }
     
-    return await response.json();
+    const questions = await response.json();
+    
+    // Per ogni domanda, prova a recuperare le risposte
+    const questionsWithAnswers = await Promise.all(
+      questions.map(async (question: QuizQuestion) => {
+        const answers = await getQuestionAnswers(question.id);
+        return {
+          ...question,
+          fetchedAnswers: answers
+        };
+      })
+    );
+    
+    return questionsWithAnswers;
   } catch (error) {
     console.error('Error fetching quiz questions:', error);
+    return [];
+  }
+}
+
+// Recupera le risposte di una domanda
+export async function getQuestionAnswers(questionId: number): Promise<Array<{ id: string; answer: string; correct?: boolean }>> {
+  try {
+    // Prova diversi endpoint per le risposte
+    const endpoints = [
+      `${WORDPRESS_URL}/wp-json/ldlms/v2/sfwd-question/${questionId}/answers`,
+      `${WORDPRESS_URL}/wp-json/wp/v2/sfwd-question/${questionId}?_fields=meta`,
+    ];
+    
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          headers: getAuthHeaders(),
+          next: { revalidate: 60 },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Se è un array di risposte
+          if (Array.isArray(data)) {
+            return data.map((item: { answer?: string; text?: string; correct?: boolean }, idx: number) => ({
+              id: `answer_${idx}`,
+              answer: item.answer || item.text || '',
+              correct: item.correct
+            }));
+          }
+          
+          // Se le risposte sono nei meta
+          if (data.meta?._answerData) {
+            try {
+              const answerData = JSON.parse(data.meta._answerData);
+              if (Array.isArray(answerData)) {
+                return answerData.map((item: { answer?: string; correct?: boolean }, idx: number) => ({
+                  id: `answer_${idx}`,
+                  answer: item.answer || '',
+                  correct: item.correct
+                }));
+              }
+            } catch {
+              // JSON parse failed
+            }
+          }
+        }
+      } catch {
+        // Endpoint non disponibile, prova il prossimo
+      }
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching question answers:', error);
     return [];
   }
 }

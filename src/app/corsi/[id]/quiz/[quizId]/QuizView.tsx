@@ -61,15 +61,23 @@ function extractAnswersFromContent(content: string): ParsedAnswer[] {
 
 // Funzione per ottenere le risposte da una domanda in qualsiasi formato
 function getQuestionAnswers(question: QuizQuestion): ParsedAnswer[] {
-  // 1. Se ci sono risposte nel formato array standard
-  if (question.answers && question.answers.length > 0) {
+  // 1. Se ci sono risposte recuperate dall'API separatamente
+  if (question.fetchedAnswers && question.fetchedAnswers.length > 0) {
+    return question.fetchedAnswers.map((a, i) => ({
+      id: a.id || `answer_${i}`,
+      text: a.answer
+    }));
+  }
+  
+  // 2. Se ci sono risposte nel formato array standard
+  if (question.answers && Array.isArray(question.answers) && question.answers.length > 0) {
     return question.answers.map((a, i) => ({
       id: a.id || `answer_${i}`,
       text: a.text
     }));
   }
   
-  // 2. Prova a estrarre dal contenuto HTML
+  // 3. Prova a estrarre dal contenuto HTML
   if (question.content?.rendered) {
     const extracted = extractAnswersFromContent(question.content.rendered);
     if (extracted.length > 0) {
@@ -77,7 +85,7 @@ function getQuestionAnswers(question: QuizQuestion): ParsedAnswer[] {
     }
   }
   
-  // 3. Prova con il campo question
+  // 4. Prova con il campo question
   if (question.question) {
     const extracted = extractAnswersFromContent(question.question);
     if (extracted.length > 0) {
