@@ -31,13 +31,19 @@
   
   /* Rimuovi sottolineature dai link */
   a {
-    @apply no-underline;
+    text-decoration: none !important;
   }
   
   /* Link blu solo per link esterni o specifici */
   a[href^="http"]:not([class*="no-underline"]),
   .prose a {
-    @apply underline;
+    text-decoration: underline;
+  }
+  
+  /* Assicura che i link nell'header non abbiano sottolineatura */
+  header a,
+  nav a {
+    text-decoration: none !important;
   }
 }
 
