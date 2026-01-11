@@ -20,23 +20,27 @@ export default function Logo({
   width = 175,
   height = 82 
 }: LogoProps) {
+  // Logo originale per sfondi chiari
   const logoUrl = 'https://accessibilita.regione.basilicata.it/wp-content/uploads/2024/08/RB_logo_350x163.gif';
   
-  // Per sfondi colorati/scuri, applica filtro per rendere il logo bianco/invertito
+  // Logo bianco per sfondi colorati/scuri
+  const logoWhiteUrl = 'https://accessibilita.regione.basilicata.it/wp-content/uploads/2024/08/RB_logo_bianco-1.png';
+  
   const isLightVariant = variant === 'light';
   const isDarkVariant = variant === 'dark';
+  
+  // Usa il logo bianco per sfondi colorati/scuri
+  const logoSrc = isLightVariant ? logoWhiteUrl : logoUrl;
   
   return (
     <div className={cn('relative', className)}>
       <Image
-        src={logoUrl}
+        src={logoSrc}
         alt="Regione Basilicata"
         width={width}
         height={height}
         className={cn(
           'h-auto transition-all duration-300',
-          isLightVariant && 'brightness-0 invert', // Logo bianco su sfondo scuro/colorato
-          isDarkVariant && 'brightness-0', // Logo nero su sfondo chiaro
           !isLightVariant && !isDarkVariant && 'h-14 w-auto' // Default
         )}
         priority
