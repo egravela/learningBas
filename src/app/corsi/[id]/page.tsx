@@ -1,7 +1,14 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import CourseDetail from './CourseDetail';
-import { getCourse, getCourseLessons, getCourseQuizzes } from '@/lib/api';
+import { 
+  getCourse, 
+  getCourseLessons, 
+  getCourseQuizzes,
+  getMaterialiDidattici,
+  getLezioniConDocente,
+  getEserciziAccessibili
+} from '@/lib/api';
 import { auth } from '@/lib/auth';
 
 interface CoursePageProps {
@@ -35,10 +42,13 @@ export default async function CoursePage({ params }: CoursePageProps) {
   const { id } = await params;
   const courseId = Number(id);
   
-  const [course, lessons, quizzes, session] = await Promise.all([
+  const [course, lessons, quizzes, materialiDidattici, lezioniConDocente, eserciziAccessibili, session] = await Promise.all([
     getCourse(courseId),
     getCourseLessons(courseId),
     getCourseQuizzes(courseId),
+    getMaterialiDidattici(),
+    getLezioniConDocente(),
+    getEserciziAccessibili(),
     auth(),
   ]);
 
@@ -46,6 +56,16 @@ export default async function CoursePage({ params }: CoursePageProps) {
     notFound();
   }
 
-  return <CourseDetail course={course} lessons={lessons} quizzes={quizzes} isAuthenticated={!!session} />;
+  return (
+    <CourseDetail 
+      course={course} 
+      lessons={lessons} 
+      quizzes={quizzes} 
+      materialiDidattici={materialiDidattici}
+      lezioniConDocente={lezioniConDocente}
+      eserciziAccessibili={eserciziAccessibili}
+      isAuthenticated={!!session} 
+    />
+  );
 }
 

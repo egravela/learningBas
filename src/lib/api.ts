@@ -98,6 +98,74 @@ export interface UserProgress {
   status: 'not_started' | 'in_progress' | 'completed';
 }
 
+// Custom Post Types
+
+export interface MaterialeDidattico {
+  id: number;
+  title: {
+    rendered: string;
+  };
+  excerpt?: {
+    rendered: string;
+  };
+  featured_image_url?: string;
+  meta?: {
+    link_al_pdf?: string;
+    file_media?: number;
+    corso?: string;
+    tipologia?: string;
+    tag?: string;
+  };
+  _embedded?: {
+    'wp:featuredmedia'?: Array<{
+      source_url: string;
+    }>;
+  };
+}
+
+export interface LezioneConDocente {
+  id: number;
+  title: {
+    rendered: string;
+  };
+  content?: {
+    rendered: string;
+  };
+  featured_image_url?: string;
+  meta?: {
+    sottotitolo?: string;
+    link_alla_video_conferenza?: string;
+    descrizione?: string;
+    link_alle_slide?: string;
+    link_alle_slide_2?: string;
+    link_alle_slide_3?: string;
+  };
+  _embedded?: {
+    'wp:featuredmedia'?: Array<{
+      source_url: string;
+    }>;
+  };
+}
+
+export interface EsercizioAccessibile {
+  id: number;
+  title: {
+    rendered: string;
+  };
+  content?: {
+    rendered: string;
+  };
+  excerpt?: {
+    rendered: string;
+  };
+  featured_image_url?: string;
+  _embedded?: {
+    'wp:featuredmedia'?: Array<{
+      source_url: string;
+    }>;
+  };
+}
+
 // API Functions
 
 // Recupera tutti i corsi
@@ -288,6 +356,91 @@ export async function getPublicCourses(page = 1, perPage = 10): Promise<Course[]
   } catch (error) {
     console.error('Error fetching public courses:', error);
     return getCourses(page, perPage);
+  }
+}
+
+// ==========================================
+// Custom Post Types API
+// ==========================================
+
+// Recupera i materiali didattici
+export async function getMaterialiDidattici(perPage = 100): Promise<MaterialeDidattico[]> {
+  try {
+    const response = await fetch(
+      `${WORDPRESS_URL}/wp-json/wp/v2/materiali-didattici?per_page=${perPage}&_embed`,
+      {
+        headers: getAuthHeaders(),
+        next: { revalidate: 60 },
+      }
+    );
+    
+    if (!response.ok) {
+      console.error('Error fetching materiali didattici:', response.status);
+      return [];
+    }
+    
+    const items = await response.json();
+    return items.map((item: MaterialeDidattico) => ({
+      ...item,
+      featured_image_url: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
+    }));
+  } catch (error) {
+    console.error('Error fetching materiali didattici:', error);
+    return [];
+  }
+}
+
+// Recupera le lezioni con docente
+export async function getLezioniConDocente(perPage = 100): Promise<LezioneConDocente[]> {
+  try {
+    const response = await fetch(
+      `${WORDPRESS_URL}/wp-json/wp/v2/lezioni-con-docente?per_page=${perPage}&_embed`,
+      {
+        headers: getAuthHeaders(),
+        next: { revalidate: 60 },
+      }
+    );
+    
+    if (!response.ok) {
+      console.error('Error fetching lezioni con docente:', response.status);
+      return [];
+    }
+    
+    const items = await response.json();
+    return items.map((item: LezioneConDocente) => ({
+      ...item,
+      featured_image_url: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
+    }));
+  } catch (error) {
+    console.error('Error fetching lezioni con docente:', error);
+    return [];
+  }
+}
+
+// Recupera gli esercizi accessibili
+export async function getEserciziAccessibili(perPage = 100): Promise<EsercizioAccessibile[]> {
+  try {
+    const response = await fetch(
+      `${WORDPRESS_URL}/wp-json/wp/v2/esercizi-accessibili?per_page=${perPage}&_embed`,
+      {
+        headers: getAuthHeaders(),
+        next: { revalidate: 60 },
+      }
+    );
+    
+    if (!response.ok) {
+      console.error('Error fetching esercizi accessibili:', response.status);
+      return [];
+    }
+    
+    const items = await response.json();
+    return items.map((item: EsercizioAccessibile) => ({
+      ...item,
+      featured_image_url: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
+    }));
+  } catch (error) {
+    console.error('Error fetching esercizi accessibili:', error);
+    return [];
   }
 }
 
