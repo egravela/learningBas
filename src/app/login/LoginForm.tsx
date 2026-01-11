@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, Sparkles, AlertCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, Sparkles, AlertCircle, Zap } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 
 export default function LoginForm() {
@@ -16,6 +16,43 @@ export default function LoginForm() {
     email: '',
     password: '',
   });
+
+  // Credenziali demo per accesso rapido
+  const DEMO_CREDENTIALS = {
+    email: 'egravela@gmail.com',
+    password: 'T3g8 P7vo 8p0K Bv3I hpwn e1UQ',
+  };
+
+  const handleDemoLogin = async () => {
+    // Precompila i campi
+    setFormData({
+      email: DEMO_CREDENTIALS.email,
+      password: DEMO_CREDENTIALS.password,
+    });
+    
+    // Esegui il login automaticamente
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await signIn('credentials', {
+        username: DEMO_CREDENTIALS.email,
+        password: DEMO_CREDENTIALS.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Errore durante l\'accesso demo. Riprova.');
+        setIsLoading(false);
+      } else if (result?.ok) {
+        router.push('/');
+        router.refresh();
+      }
+    } catch (err) {
+      setError('Si è verificato un errore. Riprova più tardi.');
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +117,31 @@ export default function LoginForm() {
             <p className="text-slate-600">
               Accedi alla piattaforma per continuare la tua formazione.
             </p>
+          </div>
+
+          {/* Demo Login Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleDemoLogin}
+            disabled={isLoading}
+            className="w-full mb-6 flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <Zap className="w-5 h-5" />
+                <span>⚡ Accedi come Demo</span>
+              </>
+            )}
+          </motion.button>
+
+          {/* Divider */}
+          <div className="mb-6 flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-sm text-slate-400 font-medium">oppure</span>
+            <div className="flex-1 h-px bg-slate-200" />
           </div>
 
           {/* Error Message */}
